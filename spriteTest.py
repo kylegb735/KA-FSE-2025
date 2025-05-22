@@ -1,7 +1,9 @@
 from pygame import *
 from glob import *
+from random import *
+from math import *
 
-screen = display.set_mode((1200,800))
+screen = display.set_mode((1600,900))
 
 def getMoves(sprite):
     moves = []
@@ -18,52 +20,71 @@ def getPics(sprite, moves):
         for picName in picNames:
             movePics.append(image.load(picName))
         enemyPics.append(movePics)
-    print(enemyPics)
     return enemyPics
 
-def update(sprite, move):
-    keys = key.get_pressed()
-    mb = mouse.get_pressed()
+def updateSprite(sprite):
+    sprite[FRAME] += 0.2
+    idle = sprite[MOVES].index('Idle')
+
+    if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
+        sprite[FRAME] = 0
+        sprite[MOVE] = idle
+    print(sprite[MOVE], sprite[FRAME])
+
+def doAttack(sprite, move):
     index = sprite[MOVES].index(move)
     idle = sprite[MOVES].index('Idle')
-    sprite[FRAME] += 0.2
     if sprite[MOVE] == idle:
-        if mb[0]:
-            sprite[MOVE] = index
-            sprite[FRAME] = 0
-        else:
-            sprite[MOVE] = idle
+        sprite[MOVE] = index
+        sprite[FRAME] = 0
     elif sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
         sprite[FRAME] = 0
         sprite[MOVE] = idle
 
-    if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
-        sprite[FRAME] = 0
-    print(sprite[MOVE], sprite[FRAME])
-
 def drawSprite(sprite):
     pic = sprite[PICS][sprite[MOVE]][int(sprite[FRAME])]
-    screen.blit(pic, (sprite[X] + pic.get_width() // 2  , sprite[Y] + pic.get_height() // 2))
+    screen.blit(pic, (sprite[X] - pic.get_width() // 2  , sprite[Y] - pic.get_height() // 2))
 
+NAME = 0
+MOVE = 1
+FRAME = 2
+HEALTH = 3
+MOVES = 4
+PICS = 5
+
+#            X   Y   Move          Speed
+berserker = ['berserker', 5   , 0, 100]
+berserker.append(getMoves(berserker[NAME]))
+berserker.append(getPics(berserker[NAME], berserker[MOVES]))
+
+shaman = ['shaman', 4   , 0, 100]
+shaman.append(getMoves(shaman[NAME]))
+shaman.append(getPics(shaman[NAME], shaman[MOVES]))
+
+warrior = ['warrior', 5   , 0, 100]
+warrior.append(getMoves(warrior[NAME]))
+warrior.append(getPics(warrior[NAME], warrior[MOVES]))
+
+enemyTypes = [berserker, shaman, warrior]
+enemies = []
+enemiesTemp = []
+enemiesPos = []
+for i in range(30):
+    enemiesPos.append([randint(100,1100), randint(100,700)])
+    enemiesTemp.append(choice(enemyTypes).copy())
+for i in range(30):
+    enemies.append([enemiesPos[i][0],enemiesPos[i][1], enemiesTemp[i][NAME], enemiesTemp[i][MOVE], enemiesTemp[i][FRAME], enemiesTemp[i][HEALTH], enemiesTemp[i][MOVES], enemiesTemp[i][PICS]])
+    # enemies.append([randint(100,1100), randint(100,700)],choice(enemyTypes).copy())
+
+print(enemies)
 X = 0
 Y = 1
 NAME = 2
 MOVE = 3
 FRAME = 4
-MOVES = 5
-PICS = 6
-
-#        X   Y   Move  Speed
-# berserkerMoves = ['Idle', 'Attack_1', 'Attack_2', 'Attack_3', 'Dead', 'Hurt', 'Jump', 'Run', 'Run+Attack', 'Walk']
-berserker = [600,400, 'berserker', 5   , 0]
-berserker.append(getMoves(berserker[NAME]))
-berserker.append(getPics(berserker[NAME], berserker[MOVES]))
-
-shaman = [400,400, 'shaman', 4   , 0]
-shaman.append(getMoves(shaman[NAME]))
-shaman.append(getPics(shaman[NAME], shaman[MOVES]))
-
-enemies = [berserker, shaman]
+HEALTH = 5
+MOVES = 6
+PICS = 7
 
 frame = 0
 running = True
@@ -72,11 +93,21 @@ while running:
     for evnt in event.get():
         if evnt.type == QUIT:
             running = False
+    mb = mouse.get_pressed()
+    keys = key.get_pressed()
     screen.fill((255,255,255))
+
+    if mb[0]:
+        for enemy in enemies[:15]:
+            doAttack(enemy, 'Attack_1')
+    if mb[2]:
+        for enemy in enemies[15:]:
+            doAttack(enemy, 'Attack_1')
+
     for enemy in enemies:
-        update(enemy, 'Attack_1')
+        updateSprite(enemy)
         drawSprite(enemy)
-    
+
     gameClock.tick(50)
     display.flip()
 quit()
