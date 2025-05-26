@@ -24,7 +24,7 @@ def getPics(sprite, moves):
 
 def generateEnemy():
     type = randint(0, len(enemyTypes) - 1) # randomly select an enemy type
-    enemies.append([randint(100, 1100), randint(100, 700), enemyTypes[type][0], enemyTypes[type][1], enemyTypes[type][2], enemyTypes[type][3], enemyTypes[type][4], enemyTypes[type][5]])
+    enemies.append([randint(100, 1100), randint(100, 700), enemyTypes[type][0], enemyTypes[type][1], enemyTypes[type][2], enemyTypes[type][3], enemyTypes[type][4], enemyTypes[type][5], enemyTypes[type][6]])
 
 def doMove(sprite, move):
     index = sprite[MOVES].index(move)
@@ -36,6 +36,15 @@ def doMove(sprite, move):
         sprite[FRAME] = 0
         sprite[MOVE] = idle
 
+def walk(sprite, x, y):
+    if x < 0:
+        sprite[FLIPPED] = True
+    if x > 0:
+        sprite[FLIPPED] = False
+    sprite[X] += x
+    sprite[Y] += y
+    sprite[MOVE] = sprite[MOVES].index('Walk')
+
 def damage(sprite, amount):
     sprite[HEALTH] -= amount
     if sprite[HEALTH] <= 0:
@@ -44,36 +53,52 @@ def damage(sprite, amount):
 def kill(sprite):
     enemies.remove(sprite)
 
+def flipped(sprite, frame):
+    if sprite[FLIPPED]:
+        return transform.flip(frame, True, False)
+    return frame
+
 def updateSprite(sprite):
     sprite[FRAME] += 0.2
     idle = sprite[MOVES].index('Idle')
+    walk = sprite[MOVES].index('Walk')
 
+    if sprite[MOVE] == walk and keys[K_d] == False and keys[K_a] == False and keys[K_w] == False and keys[K_s] == False:
+        sprite[MOVE] = idle
+        sprite[FRAME] = 0
     if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
         sprite[FRAME] = 0
-        sprite[MOVE] = idle
-    print(sprite[MOVE], sprite[FRAME])
+        if sprite[MOVE] != idle or sprite[MOVE] != walk:
+            sprite[MOVE] = idle
+    # print(sprite[MOVE], sprite[FRAME])
 
 def drawSprite(sprite):
     pic = sprite[PICS][sprite[MOVE]][int(sprite[FRAME])]
-    screen.blit(pic, (sprite[X] - pic.get_width() // 2  , sprite[Y] - pic.get_height() // 2))
+    screen.blit(flipped(sprite, pic), (sprite[X] - pic.get_width() // 2  , sprite[Y] - pic.get_height() // 2))
 
 NAME = 0
 MOVE = 1
 FRAME = 2
 HEALTH = 3
-MOVES = 4
-PICS = 5
+FLIPPED = 4
+MOVES = 5
+PICS = 6
+
+player = [800, 400, 'fighter', 5, 0, 200, False]
+player.append(getMoves(player[2]))
+player.append(getPics(player[2], player[7]))
+print(player)
 
 #            name         move  frame health
-berserker = ['berserker', 6   , 0   , 130]
+berserker = ['berserker', 6   , 0   , 130, False]
 berserker.append(getMoves(berserker[NAME]))
 berserker.append(getPics(berserker[NAME], berserker[MOVES]))
 
-shaman = ['shaman', 6   , 0, 70]
+shaman = ['shaman', 6   , 0, 70, False]
 shaman.append(getMoves(shaman[NAME]))
 shaman.append(getPics(shaman[NAME], shaman[MOVES]))
 
-warrior = ['warrior', 6   , 0, 100]
+warrior = ['warrior', 6   , 0, 100, False]
 warrior.append(getMoves(warrior[NAME]))
 warrior.append(getPics(warrior[NAME], warrior[MOVES]))
 
@@ -89,8 +114,9 @@ NAME = 2
 MOVE = 3
 FRAME = 4
 HEALTH = 5
-MOVES = 6
-PICS = 7
+FLIPPED = 6
+MOVES = 7
+PICS = 8
 
 frame = 0
 running = True
@@ -106,6 +132,15 @@ while running:
     keys = key.get_pressed()
     screen.fill((255,255,255))
 
+    if keys[K_d]:
+        walk(player, 5, 0)
+    if keys[K_a]:
+        walk(player, -5, 0)     
+    if keys[K_w]:
+        walk(player, 0, -5)
+    if keys[K_s]:
+        walk(player, 0, 5)
+
     if mbd and mb[0]:
         for enemy in enemies:
             doMove(enemy, 'Attack_4')
@@ -114,12 +149,14 @@ while running:
             doMove(enemy, 'Hurt')
             damage(enemy, 15)
 
-
     for enemy in enemies:
         if enemy[HEALTH] <= 0:
             kill(enemy)
         updateSprite(enemy)
         drawSprite(enemy)
+
+    updateSprite(player)
+    drawSprite(player)
 
     if len(enemies) < 30:
         generateEnemy()
