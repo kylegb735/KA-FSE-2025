@@ -7,7 +7,7 @@ screen = display.set_mode((1600,900))
 
 def getMoves(sprite): 
     moves = []
-    for move in glob(f"Images/Enemies/{sprite}/*"):
+    for move in glob(f"Images/Characters/{sprite}/*"):
         moves.append(move.split('\\')[-1])
     print(moves)
     return moves
@@ -16,7 +16,7 @@ def getPics(sprite, moves):
     enemyPics = []
     for move in moves:
         movePics = []
-        picNames = glob(f"Images/Enemies/{sprite}/{move}/*.png")
+        picNames = glob(f"Images/Characters/{sprite}/{move}/*.png")
         for picName in picNames:
             movePics.append(image.load(picName))
         enemyPics.append(movePics)
@@ -24,7 +24,7 @@ def getPics(sprite, moves):
 
 def generateEnemy():
     type = randint(0, len(enemyTypes) - 1) # randomly select an enemy type
-    enemies.append([randint(100, 1100), randint(100, 700), enemyTypes[type][0], enemyTypes[type][1], enemyTypes[type][2], enemyTypes[type][3], enemyTypes[type][4], enemyTypes[type][5], enemyTypes[type][6]])
+    enemies.append([randint(100, 1100), randint(100, 700), enemyTypes[type][0], enemyTypes[type][1], enemyTypes[type][2], enemyTypes[type][3], enemyTypes[type][4], enemyTypes[type][5].copy(), enemyTypes[type][6], enemyTypes[type][7]])
 
 def doMove(sprite, move):
     index = sprite[MOVES].index(move)
@@ -75,6 +75,8 @@ def updateSprite(sprite):
         sprite[FRAME] = 0
         if sprite[MOVE] != idle and sprite[MOVE] != walk:
             sprite[MOVE] = idle
+    
+    sprite[HITBOX].center = sprite[X], sprite[Y]
 
 def drawSprite(sprite):
     pic = sprite[PICS][sprite[MOVE]][int(sprite[FRAME])]
@@ -85,24 +87,25 @@ MOVE = 1
 FRAME = 2
 HEALTH = 3
 FLIPPED = 4
-MOVES = 5
-PICS = 6
+HITBOX = 5
+MOVES = 6
+PICS = 7
 
-player = [800, 400, 'fighter', 5, 0, 200, False]
+player = [800, 400, 'Fighter', 5, 0, 200, False, Rect(0,0,10,10)]
 player.append(getMoves(player[2]))
-player.append(getPics(player[2], player[7]))
+player.append(getPics(player[2], player[8]))
 print(player)
 
 #            name         move  frame health
-berserker = ['berserker', 6   , 0   , 130, False]
+berserker = ['berserker', 6   , 0   , 130, False, Rect(0,0,20,50)]
 berserker.append(getMoves(berserker[NAME]))
 berserker.append(getPics(berserker[NAME], berserker[MOVES]))
 
-shaman = ['shaman', 6   , 0, 70, False]
+shaman = ['shaman', 6   , 0, 70, False, Rect(0,0,20,50)]
 shaman.append(getMoves(shaman[NAME]))
 shaman.append(getPics(shaman[NAME], shaman[MOVES]))
 
-warrior = ['warrior', 6   , 0, 100, False]
+warrior = ['warrior', 6   , 0, 100, False, Rect(0,0,20,50)]
 warrior.append(getMoves(warrior[NAME]))
 warrior.append(getPics(warrior[NAME], warrior[MOVES]))
 
@@ -119,8 +122,9 @@ MOVE = 3
 FRAME = 4
 HEALTH = 5
 FLIPPED = 6
-MOVES = 7
-PICS = 8
+HITBOX = 7
+MOVES = 8
+PICS = 9
 
 frame = 0
 running = True
