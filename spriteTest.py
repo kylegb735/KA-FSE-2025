@@ -5,7 +5,7 @@ from math import *
 
 screen = display.set_mode((1600,900))
 
-def getMoves(sprite):
+def getMoves(sprite): 
     moves = []
     for move in glob(f"Images/Enemies/{sprite}/*"):
         moves.append(move.split('\\')[-1])
