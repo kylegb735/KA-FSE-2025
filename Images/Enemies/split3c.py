@@ -42,7 +42,7 @@ def setImage():
 
     pic = image.load(fname)   
 
-    wid,hi = 1000,600
+    wid,hi = 2000,600
     # wid,hi = pic.get_size()
     back = Surface((wid+2,hi+2),SRCALPHA)
     back.fill((pic.get_at((0,0))))
