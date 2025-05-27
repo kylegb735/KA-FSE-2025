@@ -36,14 +36,19 @@ def doMove(sprite, move):
         sprite[FRAME] = 0
         sprite[MOVE] = idle
 
-def walk(sprite, x, y):
+def move(sprite, x, y):
     if x < 0:
         sprite[FLIPPED] = True
     if x > 0:
         sprite[FLIPPED] = False
+    if keys[K_LSHIFT]:
+        x *= 1.5
+        y *= 1.5
+        sprite[MOVE] = sprite[MOVES].index('Run')
+    else:
+        sprite[MOVE] = sprite[MOVES].index('Walk')
     sprite[X] += x
     sprite[Y] += y
-    sprite[MOVE] = sprite[MOVES].index('Walk')
 
 def damage(sprite, amount):
     sprite[HEALTH] -= amount
@@ -68,13 +73,12 @@ def updateSprite(sprite):
         sprite[FRAME] = 0
     if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
         sprite[FRAME] = 0
-        if sprite[MOVE] != idle or sprite[MOVE] != walk:
+        if sprite[MOVE] != idle and sprite[MOVE] != walk:
             sprite[MOVE] = idle
-    # print(sprite[MOVE], sprite[FRAME])
 
 def drawSprite(sprite):
     pic = sprite[PICS][sprite[MOVE]][int(sprite[FRAME])]
-    screen.blit(flipped(sprite, pic), (sprite[X] - pic.get_width() // 2  , sprite[Y] - pic.get_height() // 2))
+    screen.blit(flipped(sprite, pic), (int(sprite[X]) - pic.get_width() // 2  , int(sprite[Y]) - pic.get_height() // 2))
 
 NAME = 0
 MOVE = 1
@@ -133,13 +137,20 @@ while running:
     screen.fill((255,255,255))
 
     if keys[K_d]:
-        walk(player, 5, 0)
+        move(player, 3, 0)
     if keys[K_a]:
-        walk(player, -5, 0)     
+        move(player, -3, 0)     
     if keys[K_w]:
-        walk(player, 0, -5)
+        move(player, 0, -3)
     if keys[K_s]:
-        walk(player, 0, 5)
+        move(player, 0, 3)
+
+    if keys[K_SPACE]:
+        doMove(player, 'Attack_1')
+    if keys[K_f]:
+        doMove(player, 'Attack_2')
+    if keys[K_g]:
+        doMove(player, 'Attack_3')
 
     if mbd and mb[0]:
         for enemy in enemies:
