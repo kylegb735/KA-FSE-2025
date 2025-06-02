@@ -55,6 +55,23 @@ def changeMove(sprite, move): # changes the sprite's move to the specified move,
         sprite[MOVE] = index # sets the move to the index of the move
         sprite[FRAME] = 0 # resets the frame
 
+def clear(maskX, maskY): # checks if the pixel at maskX, maskY is clear (not a wall)
+    if maskX < 0 or maskX >= mask.get_width() or maskY < 0 or maskY >= mask.get_height():
+        return False
+    else:
+        return mask.get_at((maskX, maskY)) != WALL
+
+def moveCharacter(sprite, x, y): # moves the character by x and y. Checks for walls
+    if keys[K_w] and clear(sprite[HITBOX].centerx + x, sprite[HITBOX].centery + y - 7):
+        y -= 2
+    if keys[K_s] and clear(sprite[HITBOX].centerx + x, sprite[HITBOX].centery + 7 + y):
+        y += 2
+    if keys[K_a] and clear(sprite[HITBOX].centerx + x - 7, sprite[HITBOX].centery + y):
+        x -= 2
+    if keys[K_d] and clear(sprite[HITBOX].centerx + x + 7, sprite[HITBOX].centery + y):
+        x += 2
+    return x, y
+
 def move(sprite, x, y): # moves the character by x and y. Sets FLIPPED flag. handles sprinting
     if x < 0:
         sprite[FLIPPED] = True
@@ -123,6 +140,12 @@ def drawSprite(sprite):
     draw.rect(screen, (0,0,0), sprite[HITBOX], 1)  # Draw hitbox for debugging
     screen.blit(flipped(sprite, pic), (sprite[HITBOX].centerx - pic.get_width() // 2  , sprite[HITBOX].centery - pic.get_height() // 2))
 
+def drawScene():
+    ''' As always, ALL drawing happens here '''
+    screen.blit(mapp, (-x, -y))
+    draw.circle(screen, (255, 0, 0), (800, 450), 5)  # Draw a red circle at the center for reference
+    display.flip()  # Update the display
+
 def getDist(sprite1, sprite2):
     dx = sprite2[HITBOX].centerx - sprite1[HITBOX].centerx
     dy = sprite2[HITBOX].centery - sprite1[HITBOX].centery
@@ -131,6 +154,7 @@ def getDist(sprite1, sprite2):
         d = 1
     return d, dx, dy
 
+# Sprite init stuff
 #         name     hitbox                move frame health flipped shield
 player = ['Shinobi', Rect(800,400,20,70), 5  , 0   , 200  , False, False]
 player.append(getMoves(player[0]))
@@ -158,9 +182,6 @@ sprites = [player]
 for i in range(10):
     generateEnemy()
 
-
-
-
 NAME = 0
 HITBOX = 1
 MOVE = 2
@@ -170,6 +191,15 @@ FLIPPED = 5
 SHIELD = 6
 MOVES = 7
 PICS = 8
+
+# map init stuff
+
+mask = image.load("Images/Maps/mask.png")
+mapp = image.load("Images/Maps/map.png")
+WALL = (225,135,250,255)
+
+x = 10
+y = 55
 
 frame = 0
 running = True
@@ -191,17 +221,11 @@ while running:
     mb = mouse.get_pressed()
     keys = key.get_pressed()
     screen.fill((255,255,255))
+    drawScene()  # Draw the background and mask
 
     playerShield(sprites[0])
 
-    if keys[K_d]:
-        move(sprites[0], 3, 0)
-    if keys[K_a]:
-        move(sprites[0], -3, 0)     
-    if keys[K_w]:
-        move(sprites[0], 0, -3)
-    if keys[K_s]:
-        move(sprites[0], 0, 3)
+    moveCharacter(sprites[0], x, y)  # Move the player character based on input
 
     if ku and keys[K_d] == False and keys[K_a] == False and keys[K_w] == False and keys[K_s] == False:
         stop(sprites[0])
