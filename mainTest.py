@@ -25,8 +25,12 @@ def getPics(sprite, moves):
 def generateEnemy():
     type = randint(0, len(enemyTypes) - 1) # randomly select an enemy type
     # Create a new enemy with the selected type
+    x,y = 0,0
+    while not clear(x, y):  # Ensure the enemy is spawned in a clear area
+        x, y = randint(100, 1500), randint(100, 800)  # Random position for the enemy
+        print(len(sprites), x, y)
     #               name                 hitbox                                         move  frame    health       flipped  shield  moves                pics
-    sprites.append([enemyTypes[type][0], Rect(randint(100,1500),randint(100,800), 40, 60), 6, 0, enemyTypes[type][1], False, False,  enemyTypes[type][2], enemyTypes[type][3]])
+    sprites.append([enemyTypes[type][0], Rect(x, y, 40, 60), 6, 0, enemyTypes[type][1], False, False,  enemyTypes[type][2], enemyTypes[type][3]])
 
 def playerShield(sprite):
     if keys[K_LCTRL] and sprite[MOVE] == sprite[MOVES].index('Idle'):  # If CTRL is pressed and the sprite is idle
@@ -61,7 +65,7 @@ def clear(maskX, maskY): # checks if the pixel at maskX, maskY is clear (not a w
     else:
         return mask.get_at((int(maskX), int(maskY))) != WALL
 
-def moveCharacter(sprite, X, Y): # moves the character by x and y. Checks for walls
+def moveCharacter(sprite, X, Y): # moves the map by x and y. Checks for walls
     x, y = 0, 0  # Initialize movement variables
     if keys[K_w] and clear(sprite[HITBOX].centerx + X, sprite[HITBOX].bottom + Y - 7):
         y -= 2  # Move up by 2 pixels
@@ -104,8 +108,10 @@ def move(sprite, x, y): # moves the character by x and y. Sets FLIPPED flag. han
         changeMove(sprite, 'Run') # sets the move to run
     else:
         changeMove(sprite, 'Walk') # sets the move to walk
-    sprite[HITBOX].x += x
-    sprite[HITBOX].y += y
+    # Check for walls before moving
+    if clear(sprite[HITBOX].centerx + x + mapx, sprite[HITBOX].bottom + y + mapy):
+        sprite[HITBOX].x += x
+        sprite[HITBOX].y += y
     sprite[SHIELD] = False  # Reset shield state when moving
 
 def stop(sprite): # just sets the sprite to idle if it was moving
@@ -120,7 +126,6 @@ def hurt(sprite, amount): # reduces the sprite's health by amount
 def heal(sprite, amount): # increases the sprite's health by amount
     sprite[HEALTH] += amount if sprite[HEALTH] > 100 else 0  # Prevents healing above 100 health
     draw.circle(screen, (0, 255, 100), (sprite[HITBOX].centerx + randint(-15,15), sprite[HITBOX].centery + randint(-15,15)), 3)  # Draw a green circle to indicate healing
-
 
 def kill(sprite): # removes the sprite from the enemies list
     changeMove(sprite, 'Dead')  # Change to dead before removing
@@ -175,6 +180,15 @@ def getDist(sprite1, sprite2):
         d = 1
     return d, dx, dy
 
+# map init stuff
+
+mask = image.load("Images/Maps/mask.png")
+mapp = image.load("Images/Maps/map.png")
+WALL = (225,135,250,255)
+
+mapx = 10
+mapy = 55
+
 # Sprite init stuff
 #         name     hitbox                move frame health flipped shield
 player = ['Shinobi', Rect(800,400,20,70), 5  , 0   , 200  , False, False]
@@ -213,14 +227,6 @@ SHIELD = 6
 MOVES = 7
 PICS = 8
 
-# map init stuff
-
-mask = image.load("Images/Maps/mask.png")
-mapp = image.load("Images/Maps/map.png")
-WALL = (225,135,250,255)
-
-mapx = 10
-mapy = 55
 
 frame = 0
 running = True
@@ -289,6 +295,8 @@ while running:
     # print(sprites[0][SHIELD])
 
     gameClock.tick(50)
-    print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
+    # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
+    # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
+    print(mapx, mapy)  # Print player position for debugging
     display.flip()
 quit()
