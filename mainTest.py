@@ -182,12 +182,14 @@ def getDist(sprite1, sprite2):
 
 # map init stuff
 
-mask = image.load("Images/Maps/mask.png")
+mask = image.load("Images/Maps/mask2.png")
+mask = transform.scale(mask, (6400, 3600))  # Scale the mask to fit the screen
 mapp = image.load("Images/Maps/map.png")
+mapp = transform.scale(mapp, (6400, 3600))  # Scale the mask to fit the screen
 WALL = (225,135,250,255)
 
-mapx = 10
-mapy = 55
+mapx = 0
+mapy = 0
 
 # Sprite init stuff
 #         name     hitbox                move frame health flipped shield
@@ -214,7 +216,8 @@ warrior.append(getPics(warrior[NAME], warrior[MOVES]))
 
 enemyTypes = [berserker, shaman, warrior]
 sprites = [player]
-for i in range(10):
+maxEnemies = 30  # Limit the number of enemies
+for i in range(maxEnemies):
     generateEnemy()
 
 NAME = 0
@@ -290,13 +293,13 @@ while running:
 
     updateSprite(sprites[0])
     
-    if len(sprites) < 11:  # Limit the number of enemies
+    if len(sprites) < maxEnemies + 1:  # Limit the number of enemies
         generateEnemy()
     # print(sprites[0][SHIELD])
 
     gameClock.tick(50)
-    # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
+    print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
     # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
-    print(mapx, mapy)  # Print player position for debugging
+    # print(mapx, mapy)  # Print player position for debugging
     display.flip()
 quit()
