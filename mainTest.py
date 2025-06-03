@@ -215,7 +215,7 @@ PICS = 8
 
 # map init stuff
 
-mask = image.load("Images/Maps/mask.png")
+mask = image.load("Images/Maps/mask2.png")
 mapp = image.load("Images/Maps/map.png")
 WALL = (225,135,250,255)
 
