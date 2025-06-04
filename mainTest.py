@@ -5,14 +5,14 @@ from math import *
 
 screen = display.set_mode((1600,900))
 
-def getMoves(sprite): 
+def getMoves(sprite): #get all files that contain images
     moves = []
     for move in glob(f"Images/Characters/{sprite}/*"):
         moves.append(move.split('\\')[-1])
     print(moves)
     return moves
 
-def getPics(sprite, moves):
+def getPics(sprite, moves): #get pictures from each file
     enemyPics = []
     for move in moves:
         movePics = []
@@ -68,14 +68,14 @@ def clear(maskX, maskY): # checks if the pixel at maskX, maskY is clear (not a w
 def moveCharacter(sprite, X, Y): # moves the map by x and y. Checks for walls
     x, y = 0, 0  # Initialize movement variables
     if keys[K_w] and clear(sprite[HITBOX].centerx + X, sprite[HITBOX].bottom + Y - 7):
-        y -= 2  # Move up by 2 pixels
+        y -= 3  # Move up by 2 pixels
     if keys[K_s] and clear(sprite[HITBOX].centerx + X, sprite[HITBOX].bottom + 7 + Y):
-        y += 2  # Move down by 2 pixels
-    if keys[K_a] and clear(sprite[HITBOX].centerx + X - 7, sprite[HITBOX].bottom + Y):
-        x -= 2 # Move left by 2 pixels
+        y += 3  # Move down by 2 pixels
+    if keys[K_a] and clear(sprite[HITBOX].centerx + X - 20, sprite[HITBOX].bottom + Y):
+        x -= 3 # Move left by 2 pixels
         sprite[FLIPPED] = True  # Set flipped to False if moving right
-    if keys[K_d] and clear(sprite[HITBOX].centerx + X + 7, sprite[HITBOX].bottom + Y):
-        x += 2 # Move right by 2 pixels
+    if keys[K_d] and clear(sprite[HITBOX].centerx + X + 20, sprite[HITBOX].bottom + Y):
+        x += 3 # Move right by 2 pixels
         sprite[FLIPPED] = False  # Set flipped to True if moving left
     
     if x == 0 and y == 0:  # If no movement keys are pressed
@@ -242,8 +242,8 @@ gameClock = time.Clock()
 while running:
     mill = time.get_ticks()  # Get the current time in milliseconds
     mbd = False
-    kd = False
-    ku = False
+    kd = False #key down
+    ku = False #key up
     for evnt in event.get():
         if evnt.type == QUIT:
             running = False
