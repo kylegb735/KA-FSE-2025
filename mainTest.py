@@ -191,8 +191,15 @@ def getDist(sprite1, sprite2):
         d = 1
     return d, dx, dy
 
+#health & inventory stuff
+health = image.load("Images/Bars/health.png")
+health = transform.scale(health,(300,96))
+inventory = image.load("Images/Bars/inventory.png")
+
 # map init stuff
 
+mask = image.load("Images/Maps/mask2.png")
+mask = transform.scale(mask, (6400, 3600))  # Scale the mask to fit the screen
 mask = image.load("Images/Maps/mask2.png")
 mask = transform.scale(mask, (6400, 3600))  # Scale the mask to fit the screen
 mapp = image.load("Images/Maps/map.png")
@@ -334,8 +341,10 @@ while running:
     #     generateEnemy(choice(spawnPoints))
     # print(sprites[0][SHIELD])
 
+    screen.blit(health,(1300,0))
+
     gameClock.tick(50)
-    # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
+    print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
     # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
     # print(offsetx, offsety)  # Print player position for debugging
     print(sprites[0][HEALTH])  # Print player stats
