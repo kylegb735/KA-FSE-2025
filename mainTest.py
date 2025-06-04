@@ -180,6 +180,11 @@ def getDist(sprite1, sprite2):
         d = 1
     return d, dx, dy
 
+#health & inventory stuff
+health = image.load("Images/Bars/health.png")
+health = transform.scale(health,(300,96))
+inventory = image.load("Images/Bars/inventory.png")
+
 # map init stuff
 
 mask = image.load("Images/Maps/mask2.png")
@@ -296,6 +301,8 @@ while running:
     if len(sprites) < maxEnemies + 1:  # Limit the number of enemies
         generateEnemy()
     # print(sprites[0][SHIELD])
+
+    screen.blit(health,(1300,0))
 
     gameClock.tick(50)
     print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
