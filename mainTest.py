@@ -70,21 +70,20 @@ def clear(maskX, maskY): # checks if the pixel at maskX, maskY is clear (not a w
     else:
         return mask.get_at((int(maskX), int(maskY))) != WALL
 
-def movePlayer(sprite, X, Y): # moves the map by x and y. Checks for walls
+def movePlayer(sprite, globalx, globaly): # moves the map by x and y. Checks for walls
     x, y = 0, 0  # Initialize movement variables
-    if keys[K_w] and clear(sprite[HITBOX].centerx + X, sprite[HITBOX].bottom + Y - 7):
+    if keys[K_w] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + globaly - 7):
         y -= 3  # Move up by 2 pixels
-    if keys[K_s] and clear(sprite[HITBOX].centerx + X, sprite[HITBOX].bottom + 7 + Y):
+    if keys[K_s] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + 7 + globaly):
         y += 3  # Move down by 2 pixels
-    if keys[K_a] and clear(sprite[HITBOX].centerx + X - 20, sprite[HITBOX].bottom + Y):
+    if keys[K_a] and clear(sprite[HITBOX].centerx + globalx - 20, sprite[HITBOX].bottom + globaly):
         x -= 3 # Move left by 2 pixels
         sprite[FLIPPED] = True  # Set flipped to False if moving right
-    if keys[K_d] and clear(sprite[HITBOX].centerx + X + 20, sprite[HITBOX].bottom + Y):
+    if keys[K_d] and clear(sprite[HITBOX].centerx + globalx + 20, sprite[HITBOX].bottom + globaly):
         x += 3 # Move right by 2 pixels
         sprite[FLIPPED] = False  # Set flipped to True if moving left
-    global slowPlayer, start
     if slowPlayer:  # If the player is slowed by a spell
-        if mill - start < 2000:
+        if mill - start < 5000:
             x *= 0.5
             y *= 0.5
         else:
@@ -101,15 +100,14 @@ def movePlayer(sprite, X, Y): # moves the map by x and y. Checks for walls
     x = int(x)  # Convert to integer for pixel movement
     y = int(y)
     moveScene(x, y)
-    X += x  # Update the character's position
-    Y += y
-    return X, Y
+    globalx += x  # Update the character's position
+    globaly += y
+    return globalx, globaly
 
-def moveScene(x, y):
+def moveScene(x, y): # move every enemy baseb on player movement
     for enemy in sprites[1:]:
         enemy[HITBOX].x -= x
         enemy[HITBOX].y -= y
-    return x, y
 
 def move(sprite, x, y): # moves the character (hitbox) by x and y. Sets FLIPPED flag. handles sprinting
     if x < 0:
@@ -136,6 +134,7 @@ def hurt(sprite, amount): # reduces the sprite's health by amount
     sprite[HEALTH] -= amount
     if sprite[HEALTH] <= 0:
         kill(sprite)
+        sprite[HEALTH] = 0
 
 def heal(sprite, amount): # increases the sprite's health by amount
     sprite[HEALTH] += amount if sprite[HEALTH] > 100 else 0  # Prevents healing above 100 health
@@ -185,6 +184,15 @@ def drawScene(screen, x, y):
     screen.blit(fade,(-160,-90))
     
 
+def drawHealth(health):
+    print(health)
+    screen.blit(healthBar,(1300,0))
+    if health < 200:
+        draw.line(screen, (78,74,78), (1338, 16), (1338 + ((200 - health) * 0.75), 16), 15)  # Draw the health bar
+        
+
+
+
 def getDist(sprite1, sprite2):
     dx = sprite2[HITBOX].centerx - sprite1[HITBOX].centerx
     dy = sprite2[HITBOX].centery - sprite1[HITBOX].centery
@@ -194,8 +202,8 @@ def getDist(sprite1, sprite2):
     return d, dx, dy
 
 #health & inventory stuff
-health = image.load("Images/Bars/health.png")
-health = transform.scale(health,(300,96))
+healthBar = image.load("Images/Bars/health.png")
+healthBar = transform.scale(healthBar,(300,96))
 inventory = image.load("Images/Bars/inventory.png")
 
 # map init stuff
@@ -330,7 +338,7 @@ while running:
             else:
                 if d < 50 and mill % 2000 < 250:
                     doAttack(enemy, 'Attack_1', 5, 40)
-                if d < 150 and mill % 5000 < 250:
+                if d < 150 and mill % 7000 < 250:
                     doAttack(enemy, 'Attack_3', 10, 100, True) # earthquake
                     slowPlayer = True  # Slow the player for a short duration
                     start = mill
@@ -343,8 +351,7 @@ while running:
     # if len(sprites) < maxEnemies + 1:  # Limit the number of enemies
     #     generateEnemy(choice(spawnPoints))
     # print(sprites[0][SHIELD])
-
-    screen.blit(health,(1300,0))
+    drawHealth(sprites[0][HEALTH])  # Draw the health bar
 
     gameClock.tick(50)
     print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
