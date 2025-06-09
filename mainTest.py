@@ -110,12 +110,12 @@ def moveScene(x, y): # move every enemy baseb on player movement
         enemy[HITBOX].x -= x
         enemy[HITBOX].y -= y
 
-def move(sprite, x, y): # moves the character (hitbox) by x and y. Sets FLIPPED flag. handles sprinting
+def move(sprite, x, y, run=False): # moves the character (hitbox) by x and y. Sets FLIPPED flag. handles sprinting
     if x < 0:
         sprite[FLIPPED] = True
     if x > 0:
         sprite[FLIPPED] = False
-    if keys[K_LSHIFT]:
+    if run:
         x *= 1.5 # increase speed if sprinting
         y *= 1.5
         changeMove(sprite, 'Run') # sets the move to run
@@ -185,14 +185,15 @@ def drawScene(screen, x, y):
     
 
 def drawHealth(health):
-    # print(health)
     screen.blit(fade,(-160,-90))
     screen.blit(healthBar,(1300,0))
+    screen.blit(inventory,(1515,115))
     if health < 200:
         draw.line(screen, (78,74,78), (1338, 16), (1338 + ((200 - health) * 0.75), 16), 15)  # Draw the health bar
         
-
-
+def drawInventory():
+    # Placeholder for inventory drawing logic
+    pass
 
 def getDist(sprite1, sprite2):
     dx = sprite2[HITBOX].centerx - sprite1[HITBOX].centerx
@@ -206,6 +207,7 @@ def getDist(sprite1, sprite2):
 healthBar = image.load("Images/Bars/health.png")
 healthBar = transform.scale(healthBar,(300,96))
 inventory = image.load("Images/Bars/inventory.png")
+inventory = transform.scale(inventory,(72,720))
 
 # map init stuff
 
@@ -314,19 +316,18 @@ while running:
             if 0 < enemy[HEALTH] < 50: # low health
                 heal(enemy, 0.01)
                 if d < 100: # close to player
-                    move(enemy, dx / d * -1.5, dy / d * -1.5)
+                    move(enemy, dx / d * -1, dy / d * -1, True)
                 else:
                     stop(enemy)
             else:
                 if 40 < d < 150 or -4 > dy > 4: # 40 - 150 from player. 
                     if enemy[HEALTH] > 25:
-                        move(enemy, dx / d * 1.5, dy / d * 1.5)
+                        move(enemy, dx / d * .75, dy / d * .75)
                 elif d < 40:
                     #         \/cooldown(milliseconds)
                     if mill % 2000 < 250:  # Attack every second
                         doAttack(enemy, 'Attack_1', 15, 30)
                 else:
-                    
                     stop(enemy)
 
         # shaman behaviour
@@ -337,17 +338,30 @@ while running:
                 else:
                     stop(enemy)
             elif enemy[HEALTH] > 50:
-                if 10 < d < 50:
-                    move(enemy, dx / d * 0.5, dy / d * 0.5)
+                if 40 < d < 70:
+                    move(enemy, dx / d * 2, dy / d * 2)
                     if mill % 2000 < 20:
                         doAttack(enemy, 'Attack_1', 5, 40)
+                elif 70 < d < 150:
+                    move(enemy, dx / d * -.75, dy / d * -.75)
+                    move(enemy, dx / d * .05, dy / d * .05) # turn to face player
+                else:
+                    stop(enemy)
                 if 80 < d < 160 and mill % 7000 < 20:
                     doAttack(enemy, 'Attack_3', 10, 100, True) # earthquake
                     slowPlayer = True  # Slow the player for a short duration
                     start = mill
         
         # warrior behaviour
-                    
+        if enemy[NAME] == 'warrior':
+            if enemy[HEALTH] > 0:
+                if 40 < d < 150 or -4 > dy > 4:
+                    move(enemy, dx / d * 1.5, dy / d * 1.5, True)
+                elif d < 40:
+                    if mill % 1500 < 50:
+                        doAttack(enemy, 'Attack_1', 20, 30)
+                else:
+                    stop(enemy)
                 
         updateSprite(enemy)
 
@@ -359,9 +373,9 @@ while running:
     drawHealth(sprites[0][HEALTH])  # Draw the health bar
 
     gameClock.tick(50)
-    print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
-    # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
-    # print(offsetx, offsety)  # Print player position for debugging
-    print(sprites[0][HEALTH])  # Print player stats
+    # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
+    # # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
+    # # print(offsetx, offsety)  # Print player position for debugging
+    # print(sprites[0][HEALTH])  # Print player stats
     display.flip()
 quit()
