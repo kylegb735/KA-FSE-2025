@@ -182,6 +182,8 @@ def drawSprite(sprite):
 def drawScene(screen, x, y):
     ''' As always, ALL drawing happens here '''
     screen.blit(mapp, (-x, -y))
+    screen.blit(fade,(-160,-90))
+    
 
 def getDist(sprite1, sprite2):
     dx = sprite2[HITBOX].centerx - sprite1[HITBOX].centerx
@@ -204,6 +206,7 @@ mask = image.load("Images/Maps/mask2.png")
 mask = transform.scale(mask, (6400, 3600))  # Scale the mask to fit the screen
 mapp = image.load("Images/Maps/map.png")
 mapp = transform.scale(mapp, (6400, 3600)).convert()  # Scale the mask to fit the screen
+fade = image.load("Images/Maps/fade.png")
 WALL = (225,135,250,255)
 
 offsetx = 0
