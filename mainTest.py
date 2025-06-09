@@ -82,6 +82,7 @@ def movePlayer(sprite, globalx, globaly): # moves the map by x and y. Checks for
     if keys[K_d] and clear(sprite[HITBOX].centerx + globalx + 20, sprite[HITBOX].bottom + globaly):
         x += 3 # Move right by 2 pixels
         sprite[FLIPPED] = False  # Set flipped to True if moving left
+    global slowPlayer
     if slowPlayer:  # If the player is slowed by a spell
         if mill - start < 5000:
             x *= 0.5
@@ -181,11 +182,11 @@ def drawSprite(sprite):
 def drawScene(screen, x, y):
     ''' As always, ALL drawing happens here '''
     screen.blit(mapp, (-x, -y))
-    screen.blit(fade,(-160,-90))
     
 
 def drawHealth(health):
-    print(health)
+    # print(health)
+    screen.blit(fade,(-160,-90))
     screen.blit(healthBar,(1300,0))
     if health < 200:
         draw.line(screen, (78,74,78), (1338, 16), (1338 + ((200 - health) * 0.75), 16), 15)  # Draw the health bar
@@ -317,7 +318,7 @@ while running:
                 else:
                     stop(enemy)
             else:
-                if 40 < d < 150 or -2 > dy > 2: # 40 - 150 from player. 
+                if 40 < d < 150 or -4 > dy > 4: # 40 - 150 from player. 
                     if enemy[HEALTH] > 25:
                         move(enemy, dx / d * 1.5, dy / d * 1.5)
                 elif d < 40:
@@ -335,13 +336,17 @@ while running:
                     move(enemy, dx / d * -1.5, dy / d * -1.5)
                 else:
                     stop(enemy)
-            else:
-                if d < 50 and mill % 2000 < 250:
-                    doAttack(enemy, 'Attack_1', 5, 40)
-                if d < 150 and mill % 7000 < 250:
+            elif enemy[HEALTH] > 50:
+                if 10 < d < 50:
+                    move(enemy, dx / d * 0.5, dy / d * 0.5)
+                    if mill % 2000 < 20:
+                        doAttack(enemy, 'Attack_1', 5, 40)
+                if 80 < d < 160 and mill % 7000 < 20:
                     doAttack(enemy, 'Attack_3', 10, 100, True) # earthquake
                     slowPlayer = True  # Slow the player for a short duration
                     start = mill
+        
+        # warrior behaviour
                     
                 
         updateSprite(enemy)
