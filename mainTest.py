@@ -187,7 +187,7 @@ def drawScene(screen, x, y):
 def drawHealth(health):
     screen.blit(fade,(-160,-90))
     screen.blit(healthBar,(1300,0))
-    screen.blit(inventory,(1515,115))
+    screen.blit(inventoryPic,(1515,115))
     if health < 200:
         draw.line(screen, (78,74,78), (1338, 16), (1338 + ((200 - health) * 0.75), 16), 15)  # Draw the health bar
         
@@ -203,11 +203,16 @@ def getDist(sprite1, sprite2):
         d = 1
     return d, dx, dy
 
+def changeMain(main): # Change the player's main
+    sprites[0][NAME] = main  # Change the player's name to the new main
+    sprites[0][MOVES] = getMoves(main)  # Update the moves for the new main
+    sprites[0][PICS] = getPics(main, sprites[0][MOVES])  # Update the pictures for the new main
+
 #health & inventory stuff
 healthBar = image.load("Images/Bars/health.png")
 healthBar = transform.scale(healthBar,(300,96))
-inventory = image.load("Images/Bars/inventory.png")
-inventory = transform.scale(inventory,(72,720))
+inventoryPic = image.load("Images/Bars/inventory.png")
+inventoryPic = transform.scale(inventoryPic,(72,720))
 
 # map init stuff
 
@@ -225,9 +230,11 @@ offsety = 0
 
 # Sprite init stuff
 #         name     hitbox                move frame health flipped shield
-player = ['Shinobi', Rect(800,400,20,70), 5  , 0   , 200  , False, False]
+player = ['Fighter', Rect(800,400,20,70), 5  , 0   , 200  , False, False]
 player.append(getMoves(player[0]))
 player.append(getPics(player[0], player[7]))
+
+inventory = []
 
 NAME = 0
 HEALTH = 1
@@ -264,7 +271,6 @@ SHIELD = 6
 MOVES = 7
 PICS = 8
 
-
 frame = 0
 running = True
 slowPlayer = False
@@ -294,17 +300,20 @@ while running:
 
     if ku and keys[K_d] == False and keys[K_a] == False and keys[K_w] == False and keys[K_s] == False:
         stop(sprites[0])
-
     if kd:
         if keys[K_SPACE]:
             doAttack(sprites[0], 'Attack_3', 25, 20)
-
+        if keys[K_f]:
+            changeMain('Fighter')
+        if keys[K_g]:
+            changeMain('Shinobi')
+        if keys[K_h]:
+            changeMain('Samurai')
     if mbd:
         if mb[0]:
             doAttack(sprites[0], 'Attack_1', 15, 25)
         if mb[2]:
             doAttack(sprites[0], 'Attack_2', 15, 25)
-
 
     # enemy behaviour
     for enemy in sprites[1:]:  # Skip the sprites[0]
@@ -355,8 +364,10 @@ while running:
         # warrior behaviour
         if enemy[NAME] == 'warrior':
             if enemy[HEALTH] > 0:
-                if 40 < d < 150 or -4 > dy > 4:
+                if 70 < d < 150 or -4 > dy > 4:
                     move(enemy, dx / d * 1.5, dy / d * 1.5, True)
+                elif 40 < d < 70:
+                    move(enemy, dx / d, dy / d)
                 elif d < 40:
                     if mill % 1500 < 50:
                         doAttack(enemy, 'Attack_1', 20, 30)
