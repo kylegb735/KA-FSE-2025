@@ -184,7 +184,7 @@ def drawScene(screen, x, y):
     screen.blit(mapp, (-x, -y))
     
 
-def drawHealth(health):
+def drawOverlay(health):
     screen.blit(fade,(-160,-90))
     screen.blit(healthBar,(1300,0))
     screen.blit(inventoryPic,(1515,115))
@@ -208,6 +208,13 @@ def changeMain(main): # Change the player's main
     sprites[0][MOVES] = getMoves(main)  # Update the moves for the new main
     sprites[0][PICS] = getPics(main, sprites[0][MOVES])  # Update the pictures for the new main
 
+def openChest(chest):
+    global opening
+    if chest[2] == []: # if the chest is empty
+        for i in range(randint(1,4)):
+            chest[2].append(choice(items))  # Randomly add items to the chest
+    print(chest[2])  # Print the items in the chest
+
 #health & inventory stuff
 healthBar = image.load("Images/Bars/health.png")
 healthBar = transform.scale(healthBar,(300,96))
@@ -227,6 +234,9 @@ WALL = (225,135,250,255)
 
 offsetx = 0
 offsety = 0
+
+items = ['Sword', 'Potion', 'Food']  # List of items that can be found in chests
+chests = [(580,130, [])]  # List to store location of chests
 
 # Sprite init stuff
 #         name     hitbox                move frame health flipped shield
@@ -274,6 +284,7 @@ PICS = 8
 frame = 0
 running = True
 slowPlayer = False
+opening = False  # Flag to indicate if a chest is being opened
 gameClock = time.Clock()
 while running:
     mill = time.get_ticks()  # Get the current time in milliseconds
@@ -315,73 +326,85 @@ while running:
         if mb[2]:
             doAttack(sprites[0], 'Attack_2', 15, 25)
 
-    # enemy behaviour
-    for enemy in sprites[1:]:  # Skip the sprites[0]
-        # print(enemy[SHIELD])
-        d, dx, dy = getDist(enemy, sprites[0])
-
-        # berseker behaviour
-        if enemy[NAME] == 'berserker':
-            if 0 < enemy[HEALTH] < 50: # low health
-                heal(enemy, 0.01)
-                if d < 100: # close to player
-                    move(enemy, dx / d * -1, dy / d * -1, True)
-                else:
-                    stop(enemy)
-            else:
-                if 40 < d < 150 or -4 > dy > 4: # 40 - 150 from player. 
-                    if enemy[HEALTH] > 25:
-                        move(enemy, dx / d * .75, dy / d * .75)
-                elif d < 40:
-                    #         \/cooldown(milliseconds)
-                    if mill % 2000 < 250:  # Attack every second
-                        doAttack(enemy, 'Attack_1', 15, 30)
-                else:
-                    stop(enemy)
-
-        # shaman behaviour
-        if enemy[NAME] == 'shaman':
-            if 0 < enemy[HEALTH] < 50:
-                if d < 100:
-                    move(enemy, dx / d * -1.5, dy / d * -1.5)
-                else:
-                    stop(enemy)
-            elif enemy[HEALTH] > 50:
-                if 40 < d < 70:
-                    move(enemy, dx / d * 2, dy / d * 2)
-                    if mill % 2000 < 20:
-                        doAttack(enemy, 'Attack_1', 5, 40)
-                elif 70 < d < 150:
-                    move(enemy, dx / d * -.75, dy / d * -.75)
-                    move(enemy, dx / d * .05, dy / d * .05) # turn to face player
-                else:
-                    stop(enemy)
-                if 80 < d < 160 and mill % 7000 < 20:
-                    doAttack(enemy, 'Attack_3', 10, 100, True) # earthquake
-                    slowPlayer = True  # Slow the player for a short duration
-                    start = mill
-        
-        # warrior behaviour
-        if enemy[NAME] == 'warrior':
-            if enemy[HEALTH] > 0:
-                if 70 < d < 150 or -4 > dy > 4:
-                    move(enemy, dx / d * 1.5, dy / d * 1.5, True)
-                elif 40 < d < 70:
-                    move(enemy, dx / d, dy / d)
-                elif d < 40:
-                    if mill % 1500 < 50:
-                        doAttack(enemy, 'Attack_1', 20, 30)
-                else:
-                    stop(enemy)
+    for chest in chests:  # Check for chests
+        d = hypot(sprites[0][HITBOX].centerx - (chest[0] - offsetx), sprites[0][HITBOX].centery - (chest[1] - offsety))
+        if d < 50 and not opening:
+            print('Q to open chest')
+            if keys[K_q]:
+                opening = True
                 
-        updateSprite(enemy)
+    if opening:  # If the chest is being opened
+        openChest(chest)  # Open the chest if within range and Q is pressed
 
-    updateSprite(sprites[0])
+    else:
+        # enemy behaviour
+        for enemy in sprites[1:]:  # Skip the sprites[0]
+            # print(enemy[SHIELD])
+            d, dx, dy = getDist(enemy, sprites[0])
+    
+            # berseker behaviour
+            if enemy[NAME] == 'berserker':
+                if 0 < enemy[HEALTH] < 50: # low health
+                    heal(enemy, 0.01)
+                    if d < 100: # close to player
+                        move(enemy, dx / d * -1, dy / d * -1, True)
+                    else:
+                        stop(enemy)
+                else:
+                    if 40 < d < 150 or -4 > dy > 4: # 40 - 150 from player. 
+                        if enemy[HEALTH] > 25:
+                            move(enemy, dx / d * .75, dy / d * .75)
+                    elif d < 40:
+                        #         \/cooldown(milliseconds)
+                        if mill % 2000 < 250:  # Attack every second
+                            doAttack(enemy, 'Attack_1', 15, 30)
+                    else:
+                        stop(enemy)
+    
+            # shaman behaviour
+            if enemy[NAME] == 'shaman':
+                if 0 < enemy[HEALTH] < 50:
+                    if d < 100:
+                        move(enemy, dx / d * -1.5, dy / d * -1.5)
+                    else:
+                        stop(enemy)
+                elif enemy[HEALTH] > 50:
+                    if 40 < d < 70:
+                        move(enemy, dx / d * 2, dy / d * 2)
+                        if mill % 2000 < 20:
+                            doAttack(enemy, 'Attack_1', 5, 40)
+                    elif 70 < d < 150:
+                        move(enemy, dx / d * -.75, dy / d * -.75)
+                        move(enemy, dx / d * .05, dy / d * .05) # turn to face player
+                    else:
+                        stop(enemy)
+                    if 80 < d < 160 and mill % 7000 < 20:
+                        doAttack(enemy, 'Attack_3', 10, 100, True) # earthquake
+                        slowPlayer = True  # Slow the player for a short duration
+                        start = mill
+            
+            # warrior behaviour
+            if enemy[NAME] == 'warrior':
+                if enemy[HEALTH] > 0:
+                    if 70 < d < 150 or -4 > dy > 4:
+                        move(enemy, dx / d * 1.5, dy / d * 1.5, True)
+                    elif 40 < d < 70:
+                        move(enemy, dx / d, dy / d)
+                    elif d < 40:
+                        stop(enemy)
+                        if mill % 1500 < 50:
+                            doAttack(enemy, 'Attack_1', 20, 30)
+                    else:
+                        stop(enemy)
+                    
+            updateSprite(enemy)
+
+        updateSprite(sprites[0])
     
     # if len(sprites) < maxEnemies + 1:  # Limit the number of enemies
     #     generateEnemy(choice(spawnPoints))
     # print(sprites[0][SHIELD])
-    drawHealth(sprites[0][HEALTH])  # Draw the health bar
+        drawOverlay(sprites[0][HEALTH])  # Draw the health bar
 
     gameClock.tick(50)
     # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
