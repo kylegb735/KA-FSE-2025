@@ -430,24 +430,21 @@ while running:
     # if len(sprites) < maxEnemies + 1:  # Limit the number of enemies
     #     generateEnemy(choice(spawnPoints))
     # print(sprites[0][SHIELD])
-    drawHealth(sprites[0][HEALTH])  # Draw the health bar
+    drawOverlay(sprites[0][HEALTH])  # Draw the health bar
     drawInventory()
 
-for item in droppedItems:
-        itempic, world_x, world_y = item
-        screen.blit(itempic, (world_x, world_y))
+    for item in droppedItems:
+            itempic, world_x, world_y = item
+            screen.blit(itempic, (world_x, world_y))
 
-if mbd and mb[0]:  
-    for item in droppedItems[:]:
-        itempic, x, y = item
-        itemRect = Rect(x,y,32,32)
-        itemdx = sprites[0][HITBOX].centerx - (x + itempic.get_width()//2)
-        itemdy = sprites[0][HITBOX].centery - (y + itempic.get_height()//2)
-        itemd = hypot(dx,dy)
-        if itemRect.collidepoint(mx, my) and itemd < 75:
-            inventory.append(itempic)
-            droppedItems.remove(item)
-        drawOverlay(sprites[0][HEALTH])  # Draw the health bar
+    if mbd and mb[0]:  
+        for item in droppedItems[:]:
+            itempic, x, y = item
+            itemRect = Rect(x,y,32,32)
+            if itemRect.collidepoint(mx, my):
+                inventory.append(itempic)
+                droppedItems.remove(item)
+    
 
     gameClock.tick(50)
     # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
