@@ -22,6 +22,17 @@ def getPics(sprite, moves): #get pictures from each file
         enemyPics.append(movePics)
     return enemyPics
 
+def loadItems():
+    itemImages = []
+    for name in glob(f"Images/drops/*.png"):
+        itemPic = transform.scale(image.load(name).convert_alpha(),(32,32))
+        itemImages.append(itemPic)
+    return itemImages
+
+def dropItem(position):
+    item = choice(itemImages)
+    droppedItems.append([item, position[0], position[1]])
+
 def generateEnemy(spawnPoint):
     type = randint(0, len(enemyTypes) - 1) # randomly select an enemy type
     # Create a new enemy with the selected type
@@ -109,6 +120,9 @@ def moveScene(x, y): # move every enemy baseb on player movement
     for enemy in sprites[1:]:
         enemy[HITBOX].x -= x
         enemy[HITBOX].y -= y
+    for item in droppedItems:
+        item[1] -= x
+        item[2] -= y
 
 def move(sprite, x, y, run=False): # moves the character (hitbox) by x and y. Sets FLIPPED flag. handles sprinting
     if x < 0:
@@ -143,6 +157,10 @@ def heal(sprite, amount): # increases the sprite's health by amount
 
 def kill(sprite): # removes the sprite from the enemies list
     changeMove(sprite, 'Dead')  # Change to dead before removing
+    chance = [0,1,1,1,1] 
+    chance = choice(chance)
+    if sprite != sprites[0] and chance == 1:  # Don't drop items for player death
+        dropItem(sprite[HITBOX].center)
 
 def flipped(sprite, frame): # flips the sprite if it is facing left
     if sprite[FLIPPED]:
@@ -190,10 +208,6 @@ def drawHealth(health):
     screen.blit(inventoryPic,(1515,115))
     if health < 200:
         draw.line(screen, (78,74,78), (1338, 16), (1338 + ((200 - health) * 0.75), 16), 15)  # Draw the health bar
-        
-def drawInventory():
-    # Placeholder for inventory drawing logic
-    pass
 
 def getDist(sprite1, sprite2):
     dx = sprite2[HITBOX].centerx - sprite1[HITBOX].centerx
@@ -207,6 +221,13 @@ def changeMain(main): # Change the player's main
     sprites[0][NAME] = main  # Change the player's name to the new main
     sprites[0][MOVES] = getMoves(main)  # Update the moves for the new main
     sprites[0][PICS] = getPics(main, sprites[0][MOVES])  # Update the pictures for the new main
+
+def drawInventory():
+    y = 151
+    for item in inventory:
+        draw.rect(screen,(255,0,0),(1526,y,48,48),1)
+        screen.blit(transform.scale(item,(48,48)), (1526, y))
+        y += 75
 
 #health & inventory stuff
 healthBar = image.load("Images/Bars/health.png")
@@ -234,7 +255,10 @@ player = ['Fighter', Rect(800,400,20,70), 5  , 0   , 200  , False, False]
 player.append(getMoves(player[0]))
 player.append(getPics(player[0], player[7]))
 
-inventory = []
+#item & inventory stuff
+itemImages = loadItems()      # Loads all item images
+droppedItems = []             # Each is [image, x, y]
+inventory = []               
 
 NAME = 0
 HEALTH = 1
@@ -292,6 +316,8 @@ while running:
     mb = mouse.get_pressed()
     keys = key.get_pressed()
     screen.fill(0)
+    mx, my = mouse.get_pos()
+
     drawScene(screen, offsetx, offsety)  # Draw the background and mask
 
     playerShield(sprites[0])
@@ -382,6 +408,22 @@ while running:
     #     generateEnemy(choice(spawnPoints))
     # print(sprites[0][SHIELD])
     drawHealth(sprites[0][HEALTH])  # Draw the health bar
+    drawInventory()
+
+for item in droppedItems:
+        itempic, world_x, world_y = item
+        screen.blit(itempic, (world_x, world_y))
+
+if mbd and mb[0]:  
+    for item in droppedItems[:]:
+        itempic, x, y = item
+        itemRect = Rect(x,y,32,32)
+        itemdx = sprites[0][HITBOX].centerx - (x + itempic.get_width()//2)
+        itemdy = sprites[0][HITBOX].centery - (y + itempic.get_height()//2)
+        itemd = hypot(dx,dy)
+        if itemRect.collidepoint(mx, my) and itemd < 75:
+            inventory.append(itempic)
+            droppedItems.remove(item)
 
     gameClock.tick(50)
     # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
