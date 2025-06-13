@@ -69,18 +69,19 @@ def enemyAttack(sprite, move): # handles enemy attacks
             hurt(sprites[0], damage)
             print('hit')
 
-def playerAttack(sprite, move, damage, range, spell=False):
+def playerAttack(sprite, move):
     current = sprite[MOVES][sprite[MOVE]] # name of current move
+    damage, range, spell = attacks[sprite[NAME]][current]
+    print(current, damage, range, spell)
     damage *= charDamage  if not spell else damage# Scale damage by character's damage stat
-    if 'Attack' not in current: # if its not already attacking
-        changeMove(sprite, move) # sets to attack move
-        if sprite[FLIPPED]:
-            range *= -1 # if the sprite is flipped, attack range is negative
-        for enemy in sprites[1:]:  # Check all enemies for collision
-            draw.circle(screen, (255, 0, 0), (sprite[HITBOX].centerx + range, sprite[HITBOX].centery), 10)  # Draw a red circle to indicate attack range
-            if enemy[HITBOX].collidepoint(sprite[HITBOX].centerx + (range), sprite[HITBOX].centery) and enemy[HEALTH] > 0:  # Check if the enemy is within range and not shielded
-                hurt(enemy, damage)
-                print('hit')
+    changeMove(sprite, move) # sets to attack move
+    if sprite[FLIPPED]:
+        range *= -1 # if the sprite is flipped, attack range is negative
+    for enemy in sprites[1:]:  # Check all enemies for collision
+        draw.circle(screen, (255, 0, 0), (sprite[HITBOX].centerx + range, sprite[HITBOX].centery), 10)  # Draw a red circle to indicate attack range
+        if enemy[HITBOX].collidepoint(sprite[HITBOX].centerx + (range), sprite[HITBOX].centery) and enemy[HEALTH] > 0:  # Check if the enemy is within range and not shielded
+            hurt(enemy, damage)
+            print('hit')
 
 def changeMove(sprite, move): # changes the sprite's move to the specified move, resets frame if it was idle    
     if sprite[MOVE] != sprite[MOVES].index('Dead') and sprite[MOVE] != sprite[MOVES].index(move):  # If not already dead or the same move
@@ -172,6 +173,9 @@ def heal(sprite, amount): # increases the sprite's health by amount
     sprite[HEALTH] += amount if sprite[HEALTH] > 100 else 0  # Prevents healing above 100 health
     draw.circle(screen, (0, 255, 100), (sprite[HITBOX].centerx + randint(-15,15), sprite[HITBOX].centery + randint(-15,15)), 3)  # Draw a green circle to indicate healing
 
+def starve(amount): # reduces the player's health if they are hungry
+    pass
+
 def kill(sprite): # removes the sprite from the enemies list
     changeMove(sprite, 'Dead')  # Change to dead before removing
     chance = [0,1,1,1,1] 
@@ -188,8 +192,17 @@ def updateSprite(sprite, player=False): # updates the sprite's frame (and move f
     current = sprite[MOVES][sprite[MOVE]] # name of current move
 
     if player:  # If the sprite is the player, handle special cases
-        if 'Attack' in current or current == 'Hurt': # if they just did an attack
+        if current == 'Hurt':  # If the sprite is hurt, stop updating
+            sprite[FRAME] += (0.15 * charSpeed) # updates frame
+            print(sprite[FRAME], current)
+            if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
+                sprite[FRAME] = 0 # reset frames
+                sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
+
+        elif 'Attack' in current: # if they just did an attack
             sprite[FRAME] += (.25 * charSpeed) # updates frame
+            if 1.8 < sprite[FRAME] < 2.1:
+                playerAttack(sprite, current)  # Call player attack to handle damage
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
                 sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
@@ -209,14 +222,13 @@ def updateSprite(sprite, player=False): # updates the sprite's frame (and move f
     else:
         if current == 'Hurt':  # If the sprite is hurt, stop updating
             sprite[FRAME] += 0.15 # updates frame
-            print(sprite[FRAME], current)
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
                 sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
 
         elif 'Attack' in current: # if they just did an attack
             sprite[FRAME] += 0.2 # updates frame
-            if sprite[FRAME] == 3:
+            if 2.9 < sprite[FRAME] < 3.1:
                 enemyAttack(sprite, current)  # Call enemy attack to handle damage
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
@@ -251,6 +263,8 @@ def drawOverlay(health):
     screen.blit(inventoryPic,(1515,115))
     if health < 200:
         draw.line(screen, (78,74,78), (1338, 16), (1338 + ((200 - health) * 0.75), 16), 15)  # Draw the health bar
+    if hunger < 200:
+        draw.line(screen, (78,74,78), (1338, 47), (1338 + ((200 - hunger) * 0.75), 47), 15)
 
 def getDist(sprite1, sprite2):
     dx = sprite2[HITBOX].centerx - sprite1[HITBOX].centerx
@@ -317,17 +331,26 @@ charType = 'Fighter'  # Default character type
 player = [charType, Rect(800,400,20,70), 5  , 0   , 200  , False, False]
 #        speed, dmg, def (def is % taken)
 fighter = [1.5, 0.7, 1  ]  # Fighter stats: speed, damage, defense
-shinobi = [1  , 1.2, 0.8]  # Shinobi stats: speed, damage, defense
-samurai = [0.7, 1.6, 0.6]  # Samurai stats: speed, damage, defense
+shinobi = [1.2, 1.2, 0.8]  # Shinobi stats: speed, damage, defense
+samurai = [1  , 1.6, 0.6]  # Samurai stats: speed, damage, defense
 stats = {'Fighter': fighter, 'Shinobi': shinobi, 'Samurai': samurai}  # Dictionary to hold character stats
 charSpeed, charDamage, charDefense = stats[player[0]]  # Set the player's stats based on the chosen character type
 player.append(getMoves(player[0]))
 player.append(getPics(player[0], player[7]))
+hunger = 100  # Player's hunger level
+
+fightAttacks = {'Attack_1': (20,25, False), 'Attack_2': (15,30, False), 'Attack_3': (25,20, False)}
+shinAttacks  = {'Attack_1': (20,25, False), 'Attack_2': (15,30, False), 'Attack_3': (25,20, False)}
+samAttacks   = {'Attack_1': (20,25, False), 'Attack_2': (15,50, False), 'Attack_3': (25,30, False)}
 
 #item & inventory stuff
 itemImages = loadItems()      # Loads all item images
 droppedItems = []             # Each is [image, x, y]
-inventory = []               
+inventory = []
+gold = 0  # Player's gold amount
+food = 0  # Player's food amount
+
+goldPic = image.load("Images/drops/gold.png")
 
 NAME = 0
 HEALTH = 1
@@ -338,12 +361,6 @@ berserker = ['berserker', 130]
 berserker.append(getMoves(berserker[NAME]))
 berserker.append(getPics(berserker[NAME], berserker[MOVES]))
 
-#          name           move       dmg,rng
-berAttacks = {'Attack_1': (15,30, False)}
-shamanAttacks = {'Attack_1': (5,40, False), 'Attack_3': (10,100,True)}
-warriorAttacks = {'Attack_1': (20,30, False)}
-
-attacks = {'berserker': berAttacks, 'shaman': shamanAttacks, 'warrior': warriorAttacks}  # Dictionary to hold attacks for each enemy type
 
 shaman = ['shaman', 70]
 shaman.append(getMoves(shaman[NAME]))
@@ -353,6 +370,11 @@ warrior = ['warrior', 100]
 warrior.append(getMoves(warrior[NAME]))
 warrior.append(getPics(warrior[NAME], warrior[MOVES]))
 
+#              move       dmg,rng
+berAttacks = {'Attack_1': (15,30, False)}
+shamanAttacks = {'Attack_1': (5,40, False), 'Attack_3': (10,100,True)}
+warriorAttacks = {'Attack_1': (20,30, False)}
+
 enemyTypes = [berserker, shaman, warrior]
 sprites = [player]
 maxEnemies = 12  # Limit the number of enemies
@@ -360,6 +382,8 @@ spawnPoints = [(400, 200), (1700, 600), (800, 1300)]  # Predefined spawn points
 for point in spawnPoints:
     for i in range(4):
         generateEnemy(point)  # Generate enemies at predefined spawn points
+
+attacks = {'berserker': berAttacks, 'shaman': shamanAttacks, 'warrior': warriorAttacks, 'Fighter':fightAttacks, 'Shinobi':shinAttacks, 'Samurai': samAttacks}  # Dictionary to hold attacks for each enemy type
 
 NAME = 0
 HITBOX = 1
@@ -411,12 +435,12 @@ while running:
         if keys[K_h]:
             charSpeed, charDamage, charDefense = changeMain('Samurai')
         if keys[K_SPACE]:
-            playerAttack(sprites[0], 'Attack_3', 25, 20)
+            changeMove(sprites[0], 'Attack_3')
     if mbd:
         if mb[0]:
-            playerAttack(sprites[0], 'Attack_1', 20, 25)
+            changeMove(sprites[0], 'Attack_1')
         if mb[2]:
-            playerAttack(sprites[0], 'Attack_2', 15, 30)
+            changeMove(sprites[0], 'Attack_2')
 
     for chest in chests:  # Check for chests
         d = hypot(sprites[0][HITBOX].centerx - (chest[0] - offsetx), sprites[0][HITBOX].centery - (chest[1] - offsety))
@@ -512,6 +536,13 @@ while running:
                 inventory.append(itempic)
                 droppedItems.remove(item)
     
+    if time.get_ticks() % 15000 < 50:
+        hunger -= 5
+        print(hunger)
+        if hunger < 30:
+            slowPlayer = True  # Slow the player if hunger is low
+        elif hunger <= 0:
+            hurt(sprites[0], 10)
 
     gameClock.tick(50)
     # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
