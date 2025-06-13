@@ -1,0 +1,10 @@
+Menu A
+Boss K/A
+Story A
+Food/energy K
+NPC interaction K
+Shop menu A
+Gold K
+Music A
+Map changes A
+Potions K
