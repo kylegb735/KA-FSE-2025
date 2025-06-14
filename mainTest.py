@@ -98,15 +98,15 @@ def clear(maskX, maskY): # checks if the pixel at maskX, maskY is clear (not a w
 
 def movePlayer(sprite, globalx, globaly): # moves the map by x and y. Checks for walls
     x, y = 0, 0  # Initialize movement variables
-    if keys[K_w] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + globaly - 7):
-        y -= 3  # Move up by 2 pixels
-    if keys[K_s] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + 7 + globaly):
-        y += 3  # Move down by 2 pixels
-    if keys[K_a] and clear(sprite[HITBOX].centerx + globalx - 20, sprite[HITBOX].bottom + globaly):
-        x -= 3 # Move left by 2 pixels
+    if keys[K_w] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + globaly - 14):
+        y -= 7  # Move up by 2 pixels
+    if keys[K_s] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + 14 + globaly):
+        y += 7  # Move down by 2 pixels
+    if keys[K_a] and clear(sprite[HITBOX].centerx + globalx - 30, sprite[HITBOX].bottom + globaly):
+        x -= 7 # Move left by 2 pixels
         sprite[FLIPPED] = True  # Set flipped to False if moving right
-    if keys[K_d] and clear(sprite[HITBOX].centerx + globalx + 20, sprite[HITBOX].bottom + globaly):
-        x += 3 # Move right by 2 pixels
+    if keys[K_d] and clear(sprite[HITBOX].centerx + globalx + 30, sprite[HITBOX].bottom + globaly):
+        x += 7 # Move right by 2 pixels
         sprite[FLIPPED] = False  # Set flipped to True if moving left
     global slowPlayer
     if slowPlayer:  # If the player is slowed by a spell
@@ -289,22 +289,44 @@ def drawInventory():
 def openChest(currentchest):  
     screen.blit(insidechest,(1250,439))
     chestinventory = currentchest[2]
-    for item in chestinventory:
-        print(len(chestinventory))
-        screen.blit(transform.scale(item,(48,48)), (300, y))
-        y += 75
-    for item in chestinventory[:]:
-        itempic , x, y = item
-        itemRect = Rect(x,y,32,32)
-        if itemRect.collidepoint(mx, my) and mb[0]:
-            inventory.append(itempic)
+
+    x = 1261
+    y = 451
+
+    for item in chestinventory[:5]:
+        screen.blit(transform.scale(item,(48,48)), (x, y))
+        itemRect = Rect(x, y, 48, 48)
+        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
+            inventory.append(item)
             chestinventory.remove(item)
-    for item in inventory[:]:
-        itempic, x, y = item
-        itemRect = Rect(x,y,32,32)
-        if itemRect.collidepoint(mx, my) and mb[0]:
-            chestinventory.append(itempic)
+        y += 75
+
+    for item in chestinventory[5:10]:
+        screen.blit(transform.scale(item,(48,48)), (x + 75, y - 375))
+        itemRect = Rect(x + 75, y - 375, 48, 48)
+        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
+            inventory.append(item)
+            chestinventory.remove(item)
+        y += 75
+    
+    for item in chestinventory[10:15]:
+        screen.blit(transform.scale(item,(48,48)), (x + 149, y - 750))
+        itemRect = Rect(x + 149, y - 750, 48, 48)
+        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
+            inventory.append(item)
+            chestinventory.remove(item)
+        y += 75
+    
+    x = 1526
+    y = 151
+
+    for item in inventory:
+        screen.blit(transform.scale(item, (48, 48)), (x, y))
+        itemRect = Rect(x, y, 48, 48)
+        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(chestinventory) < 15:  
+            chestinventory.append(item)
             inventory.remove(item)
+        y_inv += 75
 
 #health & inventory stuff
 healthBar = image.load("Images/Bars/health.png")
@@ -315,11 +337,9 @@ insidechest = transform.scale(image.load("Images/Bars/chest.png"),(219,372))
 
 # map init stuff
 
-mask = image.load("Images/Maps/mask2.png")
+mask = image.load("Images/Maps/mask3.png")
 mask = transform.scale(mask, (6400, 3600))  # Scale the mask to fit the screen
-mask = image.load("Images/Maps/mask2.png")
-mask = transform.scale(mask, (6400, 3600))  # Scale the mask to fit the screen
-mapp = image.load("Images/Maps/map.png")
+mapp = image.load("Images/Maps/map2.png")
 mapp = transform.scale(mapp, (6400, 3600)).convert()  # Scale the mask to fit the screen
 fade = image.load("Images/Maps/fade.png")
 WALL = (225,135,250,255)
