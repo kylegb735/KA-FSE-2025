@@ -267,22 +267,44 @@ def drawInventory():
 def openChest(currentchest):  
     screen.blit(insidechest,(1250,439))
     chestinventory = currentchest[2]
-    for item in chestinventory:
-        print(len(chestinventory))
-        screen.blit(transform.scale(item,(48,48)), (300, y))
-        y += 75
-    for item in chestinventory[:]:
-        itempic , x, y = item
-        itemRect = Rect(x,y,32,32)
-        if itemRect.collidepoint(mx, my) and mb[0]:
-            inventory.append(itempic)
+
+    x = 1261
+    y = 451
+
+    for item in chestinventory[:5]:
+        screen.blit(transform.scale(item,(48,48)), (x, y))
+        itemRect = Rect(x, y, 48, 48)
+        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
+            inventory.append(item)
             chestinventory.remove(item)
-    for item in inventory[:]:
-        itempic, x, y = item
-        itemRect = Rect(x,y,32,32)
-        if itemRect.collidepoint(mx, my) and mb[0]:
-            chestinventory.append(itempic)
+        y += 75
+
+    for item in chestinventory[5:10]:
+        screen.blit(transform.scale(item,(48,48)), (x + 75, y - 375))
+        itemRect = Rect(x + 75, y - 375, 48, 48)
+        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
+            inventory.append(item)
+            chestinventory.remove(item)
+        y += 75
+    
+    for item in chestinventory[10:15]:
+        screen.blit(transform.scale(item,(48,48)), (x + 149, y - 750))
+        itemRect = Rect(x + 149, y - 750, 48, 48)
+        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
+            inventory.append(item)
+            chestinventory.remove(item)
+        y += 75
+    
+    x = 1526
+    y = 151
+
+    for item in inventory:
+        screen.blit(transform.scale(item, (48, 48)), (x, y))
+        itemRect = Rect(x, y, 48, 48)
+        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(chestinventory) < 15:  
+            chestinventory.append(item)
             inventory.remove(item)
+        y_inv += 75
 
 #health & inventory stuff
 healthBar = image.load("Images/Bars/health.png")
