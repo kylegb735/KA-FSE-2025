@@ -96,15 +96,15 @@ def clear(maskX, maskY): # checks if the pixel at maskX, maskY is clear (not a w
 
 def movePlayer(sprite, globalx, globaly): # moves the map by x and y. Checks for walls
     x, y = 0, 0  # Initialize movement variables
-    if keys[K_w] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + globaly - 7):
-        y -= 3  # Move up by 2 pixels
-    if keys[K_s] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + 7 + globaly):
-        y += 3  # Move down by 2 pixels
-    if keys[K_a] and clear(sprite[HITBOX].centerx + globalx - 20, sprite[HITBOX].bottom + globaly):
-        x -= 3 # Move left by 2 pixels
+    if keys[K_w] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + globaly - 14):
+        y -= 7  # Move up by 2 pixels
+    if keys[K_s] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + 14 + globaly):
+        y += 7  # Move down by 2 pixels
+    if keys[K_a] and clear(sprite[HITBOX].centerx + globalx - 30, sprite[HITBOX].bottom + globaly):
+        x -= 7 # Move left by 2 pixels
         sprite[FLIPPED] = True  # Set flipped to False if moving right
-    if keys[K_d] and clear(sprite[HITBOX].centerx + globalx + 20, sprite[HITBOX].bottom + globaly):
-        x += 3 # Move right by 2 pixels
+    if keys[K_d] and clear(sprite[HITBOX].centerx + globalx + 30, sprite[HITBOX].bottom + globaly):
+        x += 7 # Move right by 2 pixels
         sprite[FLIPPED] = False  # Set flipped to True if moving left
     global slowPlayer
     if slowPlayer:  # If the player is slowed by a spell
@@ -315,11 +315,9 @@ insidechest = transform.scale(image.load("Images/Bars/chest.png"),(219,372))
 
 # map init stuff
 
-mask = image.load("Images/Maps/mask2.png")
+mask = image.load("Images/Maps/mask3.png")
 mask = transform.scale(mask, (6400, 3600))  # Scale the mask to fit the screen
-mask = image.load("Images/Maps/mask2.png")
-mask = transform.scale(mask, (6400, 3600))  # Scale the mask to fit the screen
-mapp = image.load("Images/Maps/map.png")
+mapp = image.load("Images/Maps/map2.png")
 mapp = transform.scale(mapp, (6400, 3600)).convert()  # Scale the mask to fit the screen
 fade = image.load("Images/Maps/fade.png")
 WALL = (225,135,250,255)
