@@ -486,12 +486,12 @@ while running:
             if keys[K_h]:
                 charSpeed, charDamage, charDefense = changeMain('Samurai')
             if keys[K_SPACE]:
-                playerAttack(sprites[0], 'Attack_3', 25, 20)
+                changeMove(sprites[0], 'Attack_3')
         if mbd:
             if mb[0]:
-                playerAttack(sprites[0], 'Attack_1', 20, 25)
+                changeMove(sprites[0], 'Attack_1')
             if mb[2]:
-                playerAttack(sprites[0], 'Attack_2', 15, 30)
+                changeMove(sprites[0], 'Attack_2')
 
         for chest in chests:  # Check for chests
             d = hypot(sprites[0][HITBOX].centerx - (chest[0] - offsetx), sprites[0][HITBOX].centery - (chest[1] - offsety))
@@ -523,9 +523,10 @@ while running:
                         if enemy[HEALTH] > 25:
                             move(enemy, dx / d * .75, dy / d * .75)
                     elif d < 40:
+                        stop(enemy)  # Stop if too close
                         #         \/cooldown(milliseconds)
                         if mill % 2000 < 250:  # Attack every second
-                            enemyAttack(enemy, 'Attack_1', 15, 30)
+                            changeMove(enemy, 'Attack_1')
                     else:
                         stop(enemy)
 
@@ -537,19 +538,21 @@ while running:
                     else:
                         stop(enemy)
                 elif enemy[HEALTH] > 50:
-                    if 40 < d < 70:
+                    if 45 < d < 70:
                         move(enemy, dx / d * 2, dy / d * 2)
+                    elif d < 45:
+                        stop(enemy)
                         if mill % 2000 < 20:
-                            enemyAttack(enemy, 'Attack_1', 5, 40)
+                            changeMove(enemy, 'Attack_1')
                     elif 70 < d < 150:
                         move(enemy, dx / d * -.75, dy / d * -.75)
                         move(enemy, dx / d * .05, dy / d * .05) # turn to face player
                     else:
                         stop(enemy)
                     if 80 < d < 160 and mill % 7000 < 20:
-                        enemyAttack(enemy, 'Attack_3', 10, 100, True) # earthquake
+                        changeMove(enemy, 'Attack_3') # earthquake
                         slowPlayer = True  # Slow the player for a short duration
-                        start = mill
+                        spellStart = mill
             
             # warrior behaviour
             if enemy[NAME] == 'warrior':
@@ -561,7 +564,7 @@ while running:
                     elif d < 40:
                         stop(enemy)
                         if mill % 1500 < 50:
-                            enemyAttack(enemy, 'Attack_1', 20, 30)
+                            changeMove(enemy, 'Attack_1')
                     else:
                         stop(enemy)
                     
@@ -592,6 +595,25 @@ while running:
             
         for c in chests:
             draw.circle(screen,(255,0,0),(c[0]-offsetx,c[1]-offsety),3)
+
+        if time.get_ticks() % 15000 < 50:
+            hunger -= 5
+            print(hunger)
+            if hunger < 30:
+                slowPlayer = True  # Slow the player if hunger is low
+            elif hunger <= 0:
+                hurt(sprites[0], 10)
+
+        if keys[K_2]:
+            foodCover = Surface((49, 51))  # Create a surface for the food cover
+            foodCover.fill((0, 0, 0, 0))
+            foodCover.set_colorkey((0, 0, 0))
+            foodCover.set_alpha(200)
+            draw.rect(foodCover, (111, 111, 111), (0, (0 + (mill - eatStart) / 2000 * 49), 49, 51 - (mill - eatStart) / 2000 * 49))  # Draw the chest overlay
+            screen.blit(foodCover, (1526, 225))  # Draw the food cover
+            if mill - eatStart > 2000:
+                hunger += 15
+                eatStart = mill
 
         gameClock.tick(50)
         # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
