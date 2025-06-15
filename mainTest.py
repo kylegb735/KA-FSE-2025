@@ -322,19 +322,23 @@ mapp = transform.scale(mapp, (6400, 3600)).convert()  # Scale the mask to fit th
 fade = image.load("Images/Maps/fade.png")
 WALL = (225,135,250,255)
 
+#buttons
+startbut = image.load("Images/buttons/start2.png")
+scorebut = image.load("Images/buttons/score2.png")
+
 offsetx = 0
 offsety = 0
 
 items = ['Sword', 'Potion', 'Food']  # List of items that can be found in chests
-chests = [(580,130, [])]  # List to store location of chests
-
+chests = [(560,130, []),(1764,2440,[]),(1402,1748,[]),(2812,554,[]),(2452,2772,[]),(2208,3252,[]),(4412,2474,[])]  # List to store location of chests
+#,(1852,2560,[]),(1472,1834,[]),(2952,582,[]),(2574,1908,[]),(2318,3412,[]),(4632,2596,[])
 # Sprite init stuff
 charType = 'Fighter'  # Default character type
 #         name     hitbox                move frame health flipped shield
 player = [charType, Rect(800,400,20,70), 5  , 0   , 200  , False, False]
 #        speed, dmg, def (def is % taken)
 fighter = [1.5, 0.7, 1  ]  # Fighter stats: speed, damage, defense
-shinobi = [1  , 1.2, 0.8]  # Shinobi stats: speed, damage, defense
+shinobi = [1  , 1.2, 0.8]  # Shinobi stats: speed, damage, defensew
 samurai = [0.7, 1.6, 0.6]  # Samurai stats: speed, damage, defense
 stats = {'Fighter': fighter, 'Shinobi': shinobi, 'Samurai': samurai}  # Dictionary to hold character stats
 charSpeed, charDamage, charDefense = stats[player[0]]  # Set the player's stats based on the chosen character type
@@ -382,15 +386,20 @@ MOVES = 7
 PICS = 8
 
 frame = 0
+start = False
+startRect = Rect(621,450,358,78)
+scoreRect = Rect(705,545,190,42)
 running = True
 slowPlayer = False
 opening = False  # Flag to indicate if a chest is being opened
 gameClock = time.Clock()
+
 while running:
     mill = time.get_ticks()  # Get the current time in milliseconds
     mbd = False
     kd = False #key down
     ku = False #key up
+    qd = False
     for evnt in event.get():
         if evnt.type == QUIT:
             running = False
@@ -402,133 +411,145 @@ while running:
             ku = True
     mb = mouse.get_pressed()
     keys = key.get_pressed()
-    screen.fill(0)
     mx, my = mouse.get_pos()
+    if not start:
+        draw.line(screen,(255,0,0),(800,0),(800,900))
+        draw.line(screen,(255,0,0),(0,450),(1600,450))
+        draw.line(screen,(255,0,0),(600,0),(600,900))
+        draw.line(screen,(255,0,0),(1000,0),(1000,900))
+        screen.blit(startbut,(621,450))
+        screen.blit(scorebut,(705,545))
+        if mbd and mb[0] and startRect.collidepoint(mx, my):
+            start = True
 
-    drawScene(screen, offsetx, offsety)  # Draw the background and mask
+    if start:
+        drawScene(screen, offsetx, offsety)  # Draw the background and mask
 
-    playerShield(sprites[0])
+        playerShield(sprites[0])
 
-    offsetx, offsety = movePlayer(sprites[0], offsetx, offsety)  # Move the player character based on input
+        offsetx, offsety = movePlayer(sprites[0], offsetx, offsety)  # Move the player character based on input
 
-    if ku and keys[K_d] == False and keys[K_a] == False and keys[K_w] == False and keys[K_s] == False:
-        stop(sprites[0])
-    if kd:
-        if keys[K_f]:
-            charSpeed, charDamage, charDefense = changeMain('Fighter')
-        if keys[K_g]:
-            charSpeed, charDamage, charDefense = changeMain('Shinobi')
-        if keys[K_h]:
-            charSpeed, charDamage, charDefense = changeMain('Samurai')
-        if keys[K_SPACE]:
-            playerAttack(sprites[0], 'Attack_3', 25, 20)
-    if mbd:
-        if mb[0]:
-            playerAttack(sprites[0], 'Attack_1', 20, 25)
-        if mb[2]:
-            playerAttack(sprites[0], 'Attack_2', 15, 30)
+        if ku and keys[K_d] == False and keys[K_a] == False and keys[K_w] == False and keys[K_s] == False:
+            stop(sprites[0])
+        if kd:
+            if keys[K_f]:
+                charSpeed, charDamage, charDefense = changeMain('Fighter')
+            if keys[K_g]:
+                charSpeed, charDamage, charDefense = changeMain('Shinobi')
+            if keys[K_h]:
+                charSpeed, charDamage, charDefense = changeMain('Samurai')
+            if keys[K_SPACE]:
+                playerAttack(sprites[0], 'Attack_3', 25, 20)
+        if mbd:
+            if mb[0]:
+                playerAttack(sprites[0], 'Attack_1', 20, 25)
+            if mb[2]:
+                playerAttack(sprites[0], 'Attack_2', 15, 30)
 
-    for chest in chests:  # Check for chests
-        d = hypot(sprites[0][HITBOX].centerx - (chest[0] - offsetx), sprites[0][HITBOX].centery - (chest[1] - offsety))
-        if d < 50 and not opening:
-            print('Q to open chest')
-            if keys[K_q]:
-                opening = True
+        for chest in chests:  # Check for chests
+            d = hypot(sprites[0][HITBOX].centerx - (chest[0] - offsetx), sprites[0][HITBOX].centery - (chest[1] - offsety))
+            if d < 50 and not opening:
                 currentchest = chest
-        elif (d > 50 and opening) or keys[K_ESCAPE]:
-            opening = False
+                print('Q to open chest')
+                if keys[K_q] and d < 50:
+                    opening = True
+            if opening :
+                currentd = hypot(sprites[0][HITBOX].centerx - (currentchest[0] - offsetx), sprites[0][HITBOX].centery - (currentchest[1] - offsety))
+                if currentd > 50 or keys[K_ESCAPE]:
+                    opening = False
 
-    # enemy behaviour
-    for enemy in sprites[1:]:  # Skip the sprites[0]
-        # print(enemy[SHIELD])
-        d, dx, dy = getDist(enemy, sprites[0])
+        # enemy behaviour
+        for enemy in sprites[1:]:  # Skip the sprites[0]
+            # print(enemy[SHIELD])
+            d, dx, dy = getDist(enemy, sprites[0])
 
-        # berseker behaviour
-        if enemy[NAME] == 'berserker':
-            if 0 < enemy[HEALTH] < 50: # low health
-                heal(enemy, 0.1)
-                if d < 100: # close to player
-                    move(enemy, dx / d * -1, dy / d * -1, True)
+            # berseker behaviour
+            if enemy[NAME] == 'berserker':
+                if 0 < enemy[HEALTH] < 50: # low health
+                    heal(enemy, 0.1)
+                    if d < 100: # close to player
+                        move(enemy, dx / d * -1, dy / d * -1, True)
+                    else:
+                        stop(enemy)
                 else:
-                    stop(enemy)
-            else:
-                if 40 < d < 150 or -4 > dy > 4: # 40 - 150 from player. 
-                    if enemy[HEALTH] > 25:
-                        move(enemy, dx / d * .75, dy / d * .75)
-                elif d < 40:
-                    #         \/cooldown(milliseconds)
-                    if mill % 2000 < 250:  # Attack every second
-                        enemyAttack(enemy, 'Attack_1', 15, 30)
-                else:
-                    stop(enemy)
+                    if 40 < d < 150 or -4 > dy > 4: # 40 - 150 from player. 
+                        if enemy[HEALTH] > 25:
+                            move(enemy, dx / d * .75, dy / d * .75)
+                    elif d < 40:
+                        #         \/cooldown(milliseconds)
+                        if mill % 2000 < 250:  # Attack every second
+                            enemyAttack(enemy, 'Attack_1', 15, 30)
+                    else:
+                        stop(enemy)
 
-        # shaman behaviour
-        if enemy[NAME] == 'shaman':
-            if 0 < enemy[HEALTH] < 50:
-                if d < 100:
-                    move(enemy, dx / d * -1.5, dy / d * -1.5)
-                else:
-                    stop(enemy)
-            elif enemy[HEALTH] > 50:
-                if 40 < d < 70:
-                    move(enemy, dx / d * 2, dy / d * 2)
-                    if mill % 2000 < 20:
-                        enemyAttack(enemy, 'Attack_1', 5, 40)
-                elif 70 < d < 150:
-                    move(enemy, dx / d * -.75, dy / d * -.75)
-                    move(enemy, dx / d * .05, dy / d * .05) # turn to face player
-                else:
-                    stop(enemy)
-                if 80 < d < 160 and mill % 7000 < 20:
-                    enemyAttack(enemy, 'Attack_3', 10, 100, True) # earthquake
-                    slowPlayer = True  # Slow the player for a short duration
-                    start = mill
+            # shaman behaviour
+            if enemy[NAME] == 'shaman':
+                if 0 < enemy[HEALTH] < 50:
+                    if d < 100:
+                        move(enemy, dx / d * -1.5, dy / d * -1.5)
+                    else:
+                        stop(enemy)
+                elif enemy[HEALTH] > 50:
+                    if 40 < d < 70:
+                        move(enemy, dx / d * 2, dy / d * 2)
+                        if mill % 2000 < 20:
+                            enemyAttack(enemy, 'Attack_1', 5, 40)
+                    elif 70 < d < 150:
+                        move(enemy, dx / d * -.75, dy / d * -.75)
+                        move(enemy, dx / d * .05, dy / d * .05) # turn to face player
+                    else:
+                        stop(enemy)
+                    if 80 < d < 160 and mill % 7000 < 20:
+                        enemyAttack(enemy, 'Attack_3', 10, 100, True) # earthquake
+                        slowPlayer = True  # Slow the player for a short duration
+                        start = mill
+            
+            # warrior behaviour
+            if enemy[NAME] == 'warrior':
+                if enemy[HEALTH] > 0:
+                    if 70 < d < 150 or -4 > dy > 4:
+                        move(enemy, dx / d * 1.5, dy / d * 1.5, True)
+                    elif 40 < d < 70:
+                        move(enemy, dx / d, dy / d)
+                    elif d < 40:
+                        stop(enemy)
+                        if mill % 1500 < 50:
+                            enemyAttack(enemy, 'Attack_1', 20, 30)
+                    else:
+                        stop(enemy)
+                    
+            updateSprite(enemy)
+
+        updateSprite(sprites[0], True)
+
+        # if len(sprites) < maxEnemies + 1:  # Limit the number of enemies
+        #     generateEnemy(choice(spawnPoints))
+        # print(sprites[0][SHIELD])
+        drawOverlay(sprites[0][HEALTH])  # Draw the health bar
+        drawInventory()
+
+        for item in droppedItems:
+                itempic, world_x, world_y = item
+                screen.blit(itempic, (world_x, world_y))
+
+        if mbd and mb[0]:  
+            for item in droppedItems[:]:
+                itempic, x, y = item
+                itemRect = Rect(x,y,32,32)
+                if itemRect.collidepoint(mx, my) and len(inventory) < 9:
+                    inventory.append(item)
+                    droppedItems.remove(item)
         
-        # warrior behaviour
-        if enemy[NAME] == 'warrior':
-            if enemy[HEALTH] > 0:
-                if 70 < d < 150 or -4 > dy > 4:
-                    move(enemy, dx / d * 1.5, dy / d * 1.5, True)
-                elif 40 < d < 70:
-                    move(enemy, dx / d, dy / d)
-                elif d < 40:
-                    stop(enemy)
-                    if mill % 1500 < 50:
-                        enemyAttack(enemy, 'Attack_1', 20, 30)
-                else:
-                    stop(enemy)
-                
-        updateSprite(enemy)
+        if opening:  # If the chest is being opened
+            openChest(currentchest)  # Open the chest if within range and Q is pressed
+            
+        for c in chests:
+            draw.circle(screen,(255,0,0),(c[0]-offsetx,c[1]-offsety),3)
 
-    updateSprite(sprites[0], True)
-
-    # if len(sprites) < maxEnemies + 1:  # Limit the number of enemies
-    #     generateEnemy(choice(spawnPoints))
-    # print(sprites[0][SHIELD])
-    drawOverlay(sprites[0][HEALTH])  # Draw the health bar
-    drawInventory()
-
-    for item in droppedItems:
-            itempic, world_x, world_y = item
-            screen.blit(itempic, (world_x, world_y))
-
-    if mbd and mb[0]:  
-        for item in droppedItems[:]:
-            itempic, x, y = item
-            itemRect = Rect(x,y,32,32)
-            if itemRect.collidepoint(mx, my) and len(inventory) < 9:
-                inventory.append(item)
-                droppedItems.remove(item)
-    
-    if opening:  # If the chest is being opened
-        openChest(currentchest)  # Open the chest if within range and Q is pressed
-        
-
-
-    gameClock.tick(50)
-    # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
-    # # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
-    # # print(offsetx, offsety)  # Print player position for debugging
-    # print(sprites[0][HEALTH])  # Print player stats
+        gameClock.tick(50)
+        # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
+        # # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
+        # # print(offsetx, offsety)  # Print player position for debugging
+        # print(sprites[0][HEALTH])  # Print player stats
     display.flip()
 quit()
