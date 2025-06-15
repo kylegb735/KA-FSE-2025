@@ -4,6 +4,8 @@ from random import *
 from math import *
 
 screen = display.set_mode((1600,900))
+init()
+introfont = font.SysFont("Georgia", 24)
 
 def getMoves(sprite): #get all files that contain images
     moves = []
@@ -323,8 +325,13 @@ fade = image.load("Images/Maps/fade.png")
 WALL = (225,135,250,255)
 
 #buttons
-startbut = image.load("Images/buttons/start2.png")
-scorebut = image.load("Images/buttons/score2.png")
+startbut = image.load("Images/buttons/start3.png")
+scorebut = image.load("Images/buttons/score3.png")
+
+#title
+title = image.load("Images/Maps/name.png")
+title = transform.scale(title, (936, 880))  
+
 
 offsetx = 0
 offsety = 0
@@ -387,7 +394,7 @@ PICS = 8
 
 frame = 0
 start = False
-startRect = Rect(621,450,358,78)
+startRect = Rect(1263,423,320,50)
 scoreRect = Rect(705,545,190,42)
 running = True
 slowPlayer = False
@@ -413,12 +420,31 @@ while running:
     keys = key.get_pressed()
     mx, my = mouse.get_pos()
     if not start:
-        draw.line(screen,(255,0,0),(800,0),(800,900))
+        introtext = [
+        "Centuries ago, Velmara fell to shadow...",
+        "The Hollow King sits on a cursed throne, feeding on souls.",
+        "You are the last hope—",
+        "A descendant of the Loyal Guardian.",
+        "Enter the castle. ",
+        "Restore peace. ",
+        "Or die trying.",
+        "Click 'Start' to begin your journey."]
+        for i, line in enumerate(introtext):
+            txt = introfont.render(line, True, (215, 166, 83))
+            screen.blit(txt, (950, 100 + i * 40))
+
+        screen.blit(title,(0,9))
+        screen.blit(startbut,(1233,326))
+        screen.blit(scorebut,(1346,758))
+
         draw.line(screen,(255,0,0),(0,450),(1600,450))
-        draw.line(screen,(255,0,0),(600,0),(600,900))
-        draw.line(screen,(255,0,0),(1000,0),(1000,900))
-        screen.blit(startbut,(621,450))
-        screen.blit(scorebut,(705,545))
+        draw.line(screen,(255,0,0),(800,0),(800,900))
+        draw.line(screen,(255,0,0),(0,225),(1600,225))
+        draw.line(screen,(255,0,0),(0,675),(1600,675))
+        draw.line(screen,(255,0,0),(400,0),(400,900))
+        draw.line(screen,(255,0,0),(1200,0),(1200,900))
+        draw.rect(screen,(255,0,0),startRect,1)
+
         if mbd and mb[0] and startRect.collidepoint(mx, my):
             start = True
 
@@ -542,9 +568,7 @@ while running:
         
         if opening:  # If the chest is being opened
             openChest(currentchest)  # Open the chest if within range and Q is pressed
-            
-        for c in chests:
-            draw.circle(screen,(255,0,0),(c[0]-offsetx,c[1]-offsety),3)
+
 
         gameClock.tick(50)
         # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
