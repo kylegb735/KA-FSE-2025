@@ -4,8 +4,6 @@ from random import *
 from math import *
 
 screen = display.set_mode((1600,900))
-init()
-introfont = font.SysFont("Georgia", 48)
 
 def getMoves(sprite): #get all files that contain images
     moves = []
@@ -241,6 +239,10 @@ def drawOverlay(health):
     screen.blit(fade,(-160,-90))
     screen.blit(healthBar,(1300,0))
     screen.blit(inventoryPic,(1515,115))
+    screen.blit(transform.scale(goldPic,(48,48)), (1526, 152))  # Draw the gold icon
+    screen.blit(transform.scale(foodPic,(48,48)), (1526, 227))  # Draw the food icon
+    if weapon != 'None':  # If a weapon is equipped
+        screen.blit(weapons[weapon], (1526, 302))  # Draw the weapon icon
     if health < 200:
         draw.line(screen, (78,74,78), (1338, 16), (1338 + ((200 - health) * 0.75), 16), 15)  # Draw the health bar
 
@@ -260,15 +262,15 @@ def changeMain(main): # Change the player's main
     return Speed, Damage, Defense
 
 def drawInventory():
-    y = 151
+    y = 451
     for item in inventory:
-        itempic = item[0]
-        screen.blit(transform.scale(itempic,(48,48)), (1526, y))
+        screen.blit(transform.scale(item,(48,48)), (1526, y))
         y += 75
 
 def openChest(currentchest):  
     screen.blit(insidechest,(1250,439))
     chestinventory = currentchest[2]
+    print(chestinventory)
 
     x = 1261
     y = 451
@@ -298,15 +300,15 @@ def openChest(currentchest):
         y += 75
     
     x = 1526
-    y = 151
+    y = 451
 
     for item in inventory:
-        screen.blit(transform.scale(item, (48, 48)), (x, y))
+        # screen.blit(transform.scale(item, (48, 48)), (x, y))
         itemRect = Rect(x, y, 48, 48)
         if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(chestinventory) < 15:  
             chestinventory.append(item)
             inventory.remove(item)
-        y_inv += 75
+        y += 75
 
 #health & inventory stuff
 healthBar = image.load("Images/Bars/health.png")
@@ -339,6 +341,7 @@ offsety = 0
 items = ['Sword', 'Potion', 'Food']  # List of items that can be found in chests
 chests = [(560,130, []),(1764,2440,[]),(1402,1748,[]),(2812,554,[]),(2452,2772,[]),(2208,3252,[]),(4412,2474,[])]  # List to store location of chests
 #,(1852,2560,[]),(1472,1834,[]),(2952,582,[]),(2574,1908,[]),(2318,3412,[]),(4632,2596,[])
+
 # Sprite init stuff
 charType = 'Fighter'  # Default character type
 #         name     hitbox                move frame health flipped shield
@@ -352,10 +355,34 @@ charSpeed, charDamage, charDefense = stats[player[0]]  # Set the player's stats 
 player.append(getMoves(player[0]))
 player.append(getPics(player[0], player[7]))
 
+#        speed, dmg, def (def is % taken)
+fighter = [1.5, 0.7, 1  ]  # Fighter stats: speed, damage, defense
+shinobi = [1.2, 1.2, 0.8]  # Shinobi stats: speed, damage, defense
+samurai = [1  , 1.6, 0.6]  # Samurai stats: speed, damage, defense
+stats = {'Fighter': fighter, 'Shinobi': shinobi, 'Samurai': samurai}  # Dictionary to hold character stats
+charSpeed, charDamage, charDefense = stats[player[0]]  # Set the player's stats based on the chosen character type
+player.append(getMoves(player[0]))
+player.append(getPics(player[0], player[7]))
+hunger = 100  # Player's hunger level
+
+fightAttacks = {'Attack_1': (20,25, False), 'Attack_2': (15,30, False), 'Attack_3': (25,20, False)}
+shinAttacks  = {'Attack_1': (20,25, False), 'Attack_2': (15,30, False), 'Attack_3': (25,20, False)}
+samAttacks   = {'Attack_1': (20,25, False), 'Attack_2': (15,50, False), 'Attack_3': (25,30, False)}
+
+weapons = {'None': 0, 'Dagger': transform.scale(image.load("Images/Weapons/Dagger.png").convert_alpha(), (32, 32)), 'Katana': transform.scale(image.load("Images/Weapons/Katana.png").convert_alpha(), (32, 32))}  # Dictionary to hold weapon images
+weapon = 'None'  # Default weapon
+
 #item & inventory stuff
 itemImages = loadItems()      # Loads all item images
 droppedItems = []             # Each is [image, x, y]
 inventory = []               
+inventory = []
+chests = [(580,130, [weapons['Katana']])]  # List to store location of chests
+
+gold = 0  # Player's gold amount
+food = 0  # Player's food amount
+goldPic = image.load("Images/drops/gold.png")
+foodPic = image.load("Images/drops/food.png")
 
 NAME = 0
 HEALTH = 1
@@ -392,28 +419,11 @@ SHIELD = 6
 MOVES = 7
 PICS = 8
 
-cont1 = False
 frame = 0
-start = False
-transition = True
-startRect = Rect(1263,423,320,50)
-scoreRect = Rect(705,545,190,42)
 running = True
 slowPlayer = False
 opening = False  # Flag to indicate if a chest is being opened
 gameClock = time.Clock()
-screen.fill((255,255,255))
-
-for a in range(100):
-    print(a)
-    cover = Surface((1600,900))
-    cover.fill(0)
-    cover.set_alpha(a)
-    cover.blit(title,(332,9))
-    screen.blit(cover,(0,0))
-    display.flip()
-    time.wait(10)
-
 while running:
     mill = time.get_ticks()  # Get the current time in milliseconds
     mbd = False
@@ -433,30 +443,7 @@ while running:
     keys = key.get_pressed()
     mx, my = mouse.get_pos()
 
-    if not start:
-        screen.fill(0)
-        screen.blit(startbut,(1233,326))
-        screen.blit(scorebut,(1346,758))
-        introtext = [
-        "Centuries ago, Velmara fell to shadow...",
-        "The Hollow King sits on a cursed throne, feeding on souls.",
-        "You are the last hope—",
-        "A descendant of the Loyal Guardian.",
-        "Enter the castle. ",
-        "Restore peace. ",
-        "Or die trying.",
-        "Click 'Start' to begin your journey.",
-        "(P.S You can bring Mac n' Cheese)"
-        ]
-        for i, line in enumerate(introtext):
-            txt = introfont.render(line, True, (215, 166, 83))
-            screen.blit(txt, (200, 100 + i * 80))
-        draw.rect(screen,(255,0,0),startRect,1)
-        if mbd and mb[0] and startRect.collidepoint(mx, my):
-            start = True
-
-    if start:
-        drawScene(screen, offsetx, offsety)  # Draw the background and mask
+    drawScene(screen, offsetx, offsety)  # Draw the background and mask
 
         playerShield(sprites[0])
 
@@ -587,6 +574,24 @@ while running:
                 slowPlayer = True  # Slow the player if hunger is low
             elif hunger <= 0:
                 hurt(sprites[0], 10)
+    if mbd and mb[0]:
+        for item in droppedItems[:]:
+            itempic, x, y = item
+            itemRect = Rect(x,y,32,32)
+            if itemRect.collidepoint(mx, my) and len(inventory) < 9:
+                inventory.append(itempic)
+                droppedItems.remove(itempic)
+    
+    if opening:  # If the chest is being opened
+        openChest(currentchest)  # Open the chest if within range and Q is pressed
+        
+    if time.get_ticks() % 15000 < 50:
+        hunger -= 5
+        # print(hunger)
+        if hunger < 30:
+            slowPlayer = True  # Slow the player if hunger is low
+        elif hunger <= 0:
+            hurt(sprites[0], 10)
 
         if keys[K_2]:
             foodCover = Surface((49, 51))  # Create a surface for the food cover
