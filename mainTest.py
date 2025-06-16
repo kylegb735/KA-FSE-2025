@@ -4,6 +4,8 @@ from random import *
 from math import *
 
 screen = display.set_mode((1600,900))
+init()
+introfont = font.SysFont("Georgia",48)
 
 def getMoves(sprite): #get all files that contain images
     moves = []
@@ -419,11 +421,28 @@ SHIELD = 6
 MOVES = 7
 PICS = 8
 
+cont1 = False
 frame = 0
+start = False
+transition = True
+startRect = Rect(1263,423,320,50)
+scoreRect = Rect(705,545,190,42)
 running = True
 slowPlayer = False
 opening = False  # Flag to indicate if a chest is being opened
 gameClock = time.Clock()
+screen.fill((255,255,255))
+
+for a in range(100):
+    print(a)
+    cover = Surface((1600,900))
+    cover.fill(0)
+    cover.set_alpha(a)
+    cover.blit(title,(332,9))
+    screen.blit(cover,(0,0))
+    display.flip()
+    time.wait(10)
+
 while running:
     mill = time.get_ticks()  # Get the current time in milliseconds
     mbd = False
@@ -443,7 +462,30 @@ while running:
     keys = key.get_pressed()
     mx, my = mouse.get_pos()
 
-    drawScene(screen, offsetx, offsety)  # Draw the background and mask
+    if not start:
+        screen.fill(0)
+        screen.blit(startbut,(1233,326))
+        screen.blit(scorebut,(1346,758))
+        introtext = [
+        "Centuries ago, Velmara fell to shadow...",
+        "The Hollow King sits on a cursed throne, feeding on souls.",
+        "You are the last hope—",
+        "A descendant of the Loyal Guardian.",
+        "Enter the castle. ",
+        "Restore peace. ",
+        "Or die trying.",
+        "Click 'Start' to begin your journey.",
+        "(P.S You can bring Mac n' Cheese)"
+        ]
+        for i, line in enumerate(introtext):
+            txt = introfont.render(line, True, (215, 166, 83))
+            screen.blit(txt, (200, 100 + i * 80))
+        draw.rect(screen,(255,0,0),startRect,1)
+        if mbd and mb[0] and startRect.collidepoint(mx, my):
+            start = True
+
+    if start:
+        drawScene(screen, offsetx, offsety)  # Draw the background and mask
 
         playerShield(sprites[0])
 
