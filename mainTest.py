@@ -55,34 +55,35 @@ def playerShield(sprite):
         sprite[SHIELD] = False
         changeMove(sprite, 'Idle')  # Change back to idle move when shield is released
 
-def enemyAttack(sprite, move, damage, range, spell=False):
+def enemyAttack(sprite, move): # handles enemy attacks 
     current = sprite[MOVES][sprite[MOVE]] # name of current move
-    if 'Attack' not in current: # if its not already attacking
-        changeMove(sprite, move) # sets to attack move
-        if sprite[FLIPPED]:
-            range *= -1 # if the sprite is flipped, attack range is negative
-        if spell:  # If it's a spell, apply effects to character
-            hurt(sprites[0], damage)  # Hurt the player
-        else:
-            damage *= charDefense  # Scale damage by character's defense stat
-            if sprites[0][HITBOX].collidepoint(sprite[HITBOX].centerx + (range), sprite[HITBOX].centery) and sprites[0][HEALTH] > 0 and sprites[0][SHIELD] == False:  # Check if the sprites[0] is within range and not shielded
-                changeMove(sprites[0], 'Hurt')
-                hurt(sprites[0], damage)
-                print('hit')
+    damage, range, spell = attacks[sprite[NAME]][current]
+    print(current, damage, range, spell)
+    changeMove(sprite, move) # sets to attack move
+    if sprite[FLIPPED]:
+        range *= -1 # if the sprite is flipped, attack range is negative
+    if spell:  # If it's a spell, apply effects to character
+        hurt(sprites[0], damage)  # Hurt the player
+    else:
+        damage *= charDefense  # Scale damage by character's defense stat
+        draw.circle(screen, (255, 0, 0), (sprite[HITBOX].centerx + range, sprite[HITBOX].centery), 10)  # Draw a red circle to indicate attack range
+        if sprites[0][HITBOX].collidepoint(sprite[HITBOX].centerx + (range), sprite[HITBOX].centery) and sprites[0][HEALTH] > 0 and sprites[0][SHIELD] == False:  # Check if the sprites[0] is within range and not shielded
+            hurt(sprites[0], damage)
+            print('hit')
 
-def playerAttack(sprite, move, damage, range, spell=False):
+def playerAttack(sprite, move):
     current = sprite[MOVES][sprite[MOVE]] # name of current move
+    damage, range, spell = attacks[sprite[NAME]][current]
+    print(current, damage, range, spell)
     damage *= charDamage  if not spell else damage# Scale damage by character's damage stat
-    if 'Attack' not in current: # if its not already attacking
-        changeMove(sprite, move) # sets to attack move
-        if sprite[FLIPPED]:
-            range *= -1 # if the sprite is flipped, attack range is negative
-        for enemy in sprites[1:]:  # Check all enemies for collision
-            draw.circle(screen, (255, 0, 0), (sprite[HITBOX].centerx + range, sprite[HITBOX].centery), 10)  # Draw a red circle to indicate attack range
-            if enemy[HITBOX].collidepoint(sprite[HITBOX].centerx + (range), sprite[HITBOX].centery) and enemy[HEALTH] > 0:  # Check if the enemy is within range and not shielded
-                changeMove(enemy, 'Hurt')
-                hurt(enemy, damage)
-                print('hit')
+    changeMove(sprite, move) # sets to attack move
+    if sprite[FLIPPED]:
+        range *= -1 # if the sprite is flipped, attack range is negative
+    for enemy in sprites[1:]:  # Check all enemies for collision
+        draw.circle(screen, (255, 0, 0), (sprite[HITBOX].centerx + range, sprite[HITBOX].centery), 10)  # Draw a red circle to indicate attack range
+        if enemy[HITBOX].collidepoint(sprite[HITBOX].centerx + (range), sprite[HITBOX].centery) and enemy[HEALTH] > 0:  # Check if the enemy is within range and not shielded
+            hurt(enemy, damage)
+            print('hit')
 
 def changeMove(sprite, move): # changes the sprite's move to the specified move, resets frame if it was idle
     if sprite[MOVE] != sprite[MOVES].index('Dead') and sprite[MOVE] != sprite[MOVES].index(move):  # If not already dead or the same move
@@ -302,7 +303,7 @@ def openChest(currentchest):
             chestinventory.remove(item)
         y += 75
 
-    for item in chestinventory[5:10]:
+    for item in chestinventory[6:10]:
         screen.blit(transform.scale(item,(48,48)), (x + 75, y - 375))
         itemRect = Rect(x + 75, y - 375, 48, 48)
         if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
@@ -310,7 +311,7 @@ def openChest(currentchest):
             chestinventory.remove(item)
         y += 75
     
-    for item in chestinventory[10:15]:
+    for item in chestinventory[11:15]:
         screen.blit(transform.scale(item,(48,48)), (x + 149, y - 750))
         itemRect = Rect(x + 149, y - 750, 48, 48)
         if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
@@ -420,6 +421,11 @@ warrior = ['warrior', 100]
 warrior.append(getMoves(warrior[NAME]))
 warrior.append(getPics(warrior[NAME], warrior[MOVES]))
 
+#              move       dmg,rng
+berAttacks = {'Attack_1': (15,30, False)}
+shamanAttacks = {'Attack_1': (5,40, False), 'Attack_3': (10,100,True)}
+warriorAttacks = {'Attack_1': (20,30, False)}
+
 enemyTypes = [berserker, shaman, warrior]
 sprites = [player]
 maxEnemies = 12  # Limit the number of enemies
@@ -427,6 +433,8 @@ spawnPoints = [ (1700, 600), (800, 1300)]  # Predefined spawn points
 for point in spawnPoints:
     for i in range(4):
         generateEnemy(point)  # Generate enemies at predefined spawn points
+
+attacks = {'berserker': berAttacks, 'shaman': shamanAttacks, 'warrior': warriorAttacks, 'Fighter':fightAttacks, 'Shinobi':shinAttacks, 'Samurai': samAttacks}  # Dictionary to hold attacks for each enemy type
 
 NAME = 0
 HITBOX = 1
@@ -450,7 +458,7 @@ opening = False  # Flag to indicate if a chest is being opened
 gameClock = time.Clock()
 screen.fill((255,255,255))
 
-for a in range(100):
+for a in range(60):
     print(a)
     cover = Surface((1600,900))
     cover.fill(0)
@@ -619,7 +627,7 @@ while running:
                 itempic, x, y = item
                 itemRect = Rect(x,y,32,32)
                 if itemRect.collidepoint(mx, my) and len(inventory) < 9:
-                    inventory.append(item)
+                    inventory.append(itempic)
                     droppedItems.remove(item)
         
         if opening:  # If the chest is being opened
@@ -633,13 +641,14 @@ while running:
                 slowPlayer = True  # Slow the player if hunger is low
             elif hunger <= 0:
                 hurt(sprites[0], 10)
-    if mbd and mb[0]:
-        for item in droppedItems[:]:
-            itempic, x, y = item
-            itemRect = Rect(x,y,32,32)
-            if itemRect.collidepoint(mx, my) and len(inventory) < 9:
-                inventory.append(itempic)
-                droppedItems.remove(itempic)
+    # if mbd and mb[0]:
+    #     for item in droppedItems[:]:
+    #         itempic, x, y = item
+    #         print(itempic)
+    #         itemRect = Rect(x,y,32,32)
+    #         if itemRect.collidepoint(mx, my) and len(inventory) < 9:
+    #             inventory.append(itempic)
+    #             droppedItems.remove(itempic)
     
     if opening:  # If the chest is being opened
         openChest(currentchest)  # Open the chest if within range and Q is pressed
