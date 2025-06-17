@@ -189,8 +189,17 @@ def updateSprite(sprite, player=False): # updates the sprite's frame (and move f
     current = sprite[MOVES][sprite[MOVE]] # name of current move
 
     if player:  # If the sprite is the player, handle special cases
-        if 'Attack' in current or current == 'Hurt': # if they just did an attack
-            sprite[FRAME] += (0.25 * charSpeed) # updates frame
+        if current == 'Hurt':  # If the sprite is hurt, stop updating
+            sprite[FRAME] += (0.15 * charSpeed) # updates frame
+            print(sprite[FRAME], current)
+            if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
+                sprite[FRAME] = 0 # reset frames
+                sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
+
+        elif 'Attack' in current: # if they just did an attack
+            sprite[FRAME] += (.25 * charSpeed) # updates frame
+            if 1.8 < sprite[FRAME] < 2.1:
+                playerAttack(sprite, current)  # Call player attack to handle damage
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
                 sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
@@ -208,8 +217,16 @@ def updateSprite(sprite, player=False): # updates the sprite's frame (and move f
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
     else:
-        if 'Attack' in current or current == 'Hurt': # if they just did an attack
-            sprite[FRAME] += 0.25 # updates frame
+        if current == 'Hurt':  # If the sprite is hurt, stop updating
+            sprite[FRAME] += 0.15 # updates frame
+            if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
+                sprite[FRAME] = 0 # reset frames
+                sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
+
+        elif 'Attack' in current: # if they just did an attack
+            sprite[FRAME] += 0.2 # updates frame
+            if 2.9 < sprite[FRAME] < 3.1:
+                enemyAttack(sprite, current)  # Call enemy attack to handle damage
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
                 sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
