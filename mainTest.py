@@ -5,7 +5,7 @@ from math import *
 
 screen = display.set_mode((1600,900))
 init()
-introfont = font.SysFont("Georgia",48)
+introfont = font.SysFont("Georgia",36)
 
 def getMoves(sprite): #get all files that contain images
     moves = []
@@ -487,9 +487,8 @@ SHIELD = 6
 MOVES = 7
 PICS = 8
 
-cont1 = False
 frame = 0
-start = True
+start = False
 transition = True
 startRect = Rect(1263,423,320,50)
 scoreRect = Rect(705,545,190,42)
@@ -498,17 +497,87 @@ eating = False  # Flag to indicate if the player is eating
 slowPlayer = False
 opening = False  # Flag to indicate if a chest is being opened
 gameClock = time.Clock()
-screen.fill((255,255,255))
 
-for a in range(60):
-    print(a)
-    cover = Surface((1600,900))
-    cover.fill(0)
-    cover.set_alpha(a)
-    cover.blit(title,(332,9))
-    screen.blit(cover,(0,0))
+introtext = [
+        "Centuries ago...",
+        "The Mad King Minos waged a terrible war",
+        "The Kingdom of Velmara fell to shadows...",
+        "With her last breath, Princess Rose damned the Mad King",
+        "Now he sits on a cursed throne , feeding on souls.",
+        "You are the last hope—",
+        "The last of Velmarian blood.",
+        "Enter the castle!",
+        "Restore peace!",
+        "Free the tortured souls",
+        "Or die trying...",
+        ]
+    
+for a in range(40):
+    introtextcover = Surface((1600,900))
+    introtextcover.fill(0)
+    introtextcover.set_alpha(a)
+    for i, line in enumerate(introtext):
+            introtxt = introfont.render(line, True, (215, 166, 83))
+            introtextcover.blit(introtxt, (100, 40 + i * 80))
+    screen.blit(introtextcover,(0,0))
     display.flip()
-    time.wait(10)
+    time.wait(20)
+
+waiting = True
+
+while waiting:
+    for evnt in event.get():
+        if evnt.type == QUIT:
+            quit()
+        if evnt.type == MOUSEBUTTONDOWN and evnt.button == 1:
+            waiting = False
+
+    for i, line in enumerate(introtext):
+        introtxt = introfont.render(line, True, (215, 166, 83))
+        introtextcover.blit(introtxt, (100, 40 + i * 80))
+
+    time.wait(100)
+    screen.blit(introfont.render("Click to continue", True, (215, 166, 83)), (1325, 850))
+    display.flip()
+    time.wait(30)
+
+screen.fill(0)
+
+for a in range(40):
+    print(a)
+    introtextcover = Surface((1600,900))
+    introtextcover.fill(0)
+    introtextcover.set_alpha(a)
+    introtextcover.blit(font.SysFont("Georgia",64).render("Welcome", True, (215, 166, 83)), (655, 335))
+    introtextcover.blit(font.SysFont("Georgia",64).render("To", True, (215, 166, 83)), (760, 405))
+    introtextcover.blit(font.SysFont("Georgia",64).render("The", True, (215, 166, 83)), (740, 475))
+    screen.blit(introtextcover,(0,0))
+    display.flip()
+    time.wait(20)
+
+for a in range(50):
+    titlecover = Surface((1600,900))
+    titlecover.fill(0)
+    titlecover.set_alpha(a)
+    titlecover.blit(title,(332,9))
+    screen.blit(titlecover,(0,0))
+    display.flip()
+    time.wait(20)
+
+waiting = True
+
+while waiting:
+    for evnt in event.get():
+        if evnt.type == QUIT:
+            quit()
+        if evnt.type == MOUSEBUTTONDOWN and evnt.button == 1:
+            waiting = False
+
+    screen.fill((0, 0, 0))
+    screen.blit(title, (332, 9))
+    screen.blit(introfont.render("Click to continue", True, (215, 166, 83)), (1325, 850))
+    display.flip()
+    time.wait(30)
 
 while running:
     mill = time.get_ticks()  # Get the current time in milliseconds
@@ -531,22 +600,9 @@ while running:
 
     if not start:
         screen.fill(0)
+        screen.blit(title, (332, 9))
         screen.blit(startbut,(1233,326))
         screen.blit(scorebut,(1346,758))
-        introtext = [
-        "Centuries ago, Velmara fell to shadow...",
-        "The Hollow King sits on a cursed throne, feeding on souls.",
-        "You are the last hope—",
-        "A descendant of the Loyal Guardian.",
-        "Enter the castle. ",
-        "Restore peace. ",
-        "Or die trying.",
-        "Click 'Start' to begin your journey.",
-        "(P.S You can bring Mac n' Cheese)"
-        ]
-        for i, line in enumerate(introtext):
-            txt = introfont.render(line, True, (215, 166, 83))
-            screen.blit(txt, (200, 100 + i * 80))
         draw.rect(screen,(255,0,0),startRect,1)
         if mbd and mb[0] and startRect.collidepoint(mx, my):
             start = True
