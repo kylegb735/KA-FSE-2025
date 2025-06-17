@@ -265,6 +265,9 @@ def drawOverlay(health):
         screen.blit(weaponPic, (1526, 302))  # Draw the weapon icon
     if health < 200:
         draw.line(screen, (78,74,78), (1338, 16), (1338 + ((200 - health) * 0.75), 16), 15)  # Draw the health bar
+    if hunger < 200:
+        draw.line(screen, (78,74,78), (1338, 47), (1338 + ((200 - hunger) * 0.75), 47), 15)
+
 
 def getDist(sprite1, sprite2):
     dx = sprite2[HITBOX].centerx - sprite1[HITBOX].centerx
@@ -643,27 +646,10 @@ while running:
                 slowPlayer = True  # Slow the player if hunger is low
             elif hunger <= 0:
                 hurt(sprites[0], 10)
-    # if mbd and mb[0]:
-    #     for item in droppedItems[:]:
-    #         itempic, x, y = item
-    #         print(itempic)
-    #         itemRect = Rect(x,y,32,32)
-    #         if itemRect.collidepoint(mx, my) and len(inventory) < 9:
-    #             inventory.append(itempic)
-    #             droppedItems.remove(itempic)
-    
-    if opening:  # If the chest is being opened
-        openChest(currentchest)  # Open the chest if within range and Q is pressed
         
-    if time.get_ticks() % 15000 < 50:
-        hunger -= 5
-        # print(hunger)
-        if hunger < 30:
-            slowPlayer = True  # Slow the player if hunger is low
-        elif hunger <= 0:
-            hurt(sprites[0], 10)
-
-        if keys[K_2]:
+        if keys[K_2] and hunger < 200:  # If the player presses 2 and hunger is below 200
+            if kd:
+                eatStart = mill  # Start eating when the key is pressed
             foodCover = Surface((49, 51))  # Create a surface for the food cover
             foodCover.fill((0, 0, 0, 0))
             foodCover.set_colorkey((0, 0, 0))
@@ -673,7 +659,15 @@ while running:
             if mill - eatStart > 2000:
                 hunger += 15
                 eatStart = mill
-
+    # if mbd and mb[0]:
+    #     for item in droppedItems[:]:
+    #         itempic, x, y = item
+    #         print(itempic)
+    #         itemRect = Rect(x,y,32,32)
+    #         if itemRect.collidepoint(mx, my) and len(inventory) < 9:
+    #             inventory.append(itempic)
+    #             droppedItems.remove(itempic)
+    
         gameClock.tick(50)
         # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
         # # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
