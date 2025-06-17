@@ -503,17 +503,6 @@ fight = 0
 respawning = False
 gameClock = time.Clock()
 
-<<<<<<< HEAD
-offset = 4000, 0
-
-for a in range(60):
-    print(a)
-    cover = Surface((1600,900))
-    cover.fill(0)
-    cover.set_alpha(a)
-    cover.blit(title,(332,9))
-    screen.blit(cover,(0,0))
-=======
 introtext = [
         "Centuries ago...",
         "The Mad King Minos waged a terrible war",
@@ -536,7 +525,6 @@ for a in range(40):
             introtxt = introfont.render(line, True, (215, 166, 83))
             introtextcover.blit(introtxt, (100, 40 + i * 80))
     screen.blit(introtextcover,(0,0))
->>>>>>> e76bfb88f5d8b0c970ddeeadc1b908e7d09ad63d
     display.flip()
     time.wait(20)
 
