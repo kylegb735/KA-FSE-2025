@@ -261,8 +261,8 @@ def drawOverlay(health):
     screen.blit(inventoryPic,(1515,115))
     screen.blit(transform.scale(goldPic,(48,48)), (1526, 152))  # Draw the gold icon
     screen.blit(transform.scale(foodPic,(48,48)), (1526, 227))  # Draw the food icon
-    if weapon != 'None':  # If a weapon is equipped
-        screen.blit(weapons[weapon], (1526, 302))  # Draw the weapon icon
+    if weaponPic != 'None':  # If a weapon is equipped
+        screen.blit(weaponPic, (1526, 302))  # Draw the weapon icon
     if health < 200:
         draw.line(screen, (78,74,78), (1338, 16), (1338 + ((200 - health) * 0.75), 16), 15)  # Draw the health bar
 
@@ -278,8 +278,9 @@ def changeMain(main): # Change the player's main
     sprites[0][NAME] = main  # Change the player's name to the new main
     sprites[0][MOVES] = getMoves(main)  # Update the moves for the new main
     sprites[0][PICS] = getPics(main, sprites[0][MOVES])  # Update the pictures for the new main
+    weaponPic = weapons[main] if main in weapons else 'None'  # Get the weapon picture for the new main
     Speed, Damage, Defense = stats[main]  # Update character stats based on the new main
-    return Speed, Damage, Defense
+    return Speed, Damage, Defense, weaponPic
 
 def drawInventory():
     y = 451
@@ -359,7 +360,9 @@ offsetx = 0
 offsety = 0
 
 items = ['Sword', 'Potion', 'Food']  # List of items that can be found in chests
-chests = [(560,130, []),(1764,2440,[]),(1402,1748,[]),(2812,554,[]),(2452,2772,[]),(2208,3252,[]),(4412,2474,[])]  # List to store location of chests
+weapons = {'Shinobi': transform.scale(image.load("Images/Weapons/Dagger.png").convert_alpha(), (32, 32)), 'Samurai': transform.scale(image.load("Images/Weapons/Katana.png").convert_alpha(), (32, 32))}  # Dictionary to hold weapon images
+weaponPic = 'None'  # Default weapon
+chests = [(560,130, [weapons['Samurai']]),(1764,2440,[]),(1402,1748,[]),(2812,554,[]),(2452,2772,[]),(2208,3252,[]),(4412,2474,[])]  # List to store location of chests
 #,(1852,2560,[]),(1472,1834,[]),(2952,582,[]),(2574,1908,[]),(2318,3412,[]),(4632,2596,[])
 
 # Sprite init stuff
@@ -389,15 +392,12 @@ fightAttacks = {'Attack_1': (20,25, False), 'Attack_2': (15,30, False), 'Attack_
 shinAttacks  = {'Attack_1': (20,25, False), 'Attack_2': (15,30, False), 'Attack_3': (25,20, False)}
 samAttacks   = {'Attack_1': (20,25, False), 'Attack_2': (15,50, False), 'Attack_3': (25,30, False)}
 
-weapons = {'None': 0, 'Dagger': transform.scale(image.load("Images/Weapons/Dagger.png").convert_alpha(), (32, 32)), 'Katana': transform.scale(image.load("Images/Weapons/Katana.png").convert_alpha(), (32, 32))}  # Dictionary to hold weapon images
-weapon = 'None'  # Default weapon
-
 #item & inventory stuff
 itemImages = loadItems()      # Loads all item images
 droppedItems = []             # Each is [image, x, y]
 inventory = []               
 inventory = []
-chests = [(580,130, [weapons['Katana']])]  # List to store location of chests
+
 
 gold = 0  # Player's gold amount
 food = 0  # Player's food amount
@@ -520,11 +520,13 @@ while running:
             stop(sprites[0])
         if kd:
             if keys[K_f]:
-                charSpeed, charDamage, charDefense = changeMain('Fighter')
+                charSpeed, charDamage, charDefense, weaponPic = changeMain('Fighter')
             if keys[K_g]:
-                charSpeed, charDamage, charDefense = changeMain('Shinobi')
+                if weapons['Shinobi'] in inventory:  # If the player doesn't have a dagger
+                    charSpeed, charDamage, charDefense, weaponPic = changeMain('Shinobi')
             if keys[K_h]:
-                charSpeed, charDamage, charDefense = changeMain('Samurai')
+                if weapons['Samurai'] in inventory:  # If the player doesn't have a dagger
+                    charSpeed, charDamage, charDefense, weaponPic = changeMain('Samurai')
             if keys[K_SPACE]:
                 changeMove(sprites[0], 'Attack_3')
         if mbd:
