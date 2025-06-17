@@ -320,6 +320,7 @@ def drawInventory():
         y += 75
 
 def openChest(currentchest):  
+    global activeLoreItem, showLore
     screen.blit(insidechest,(1250,439))
     chestinventory = currentchest[2]
     print(chestinventory)
@@ -333,6 +334,9 @@ def openChest(currentchest):
         if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
             inventory.append(item)
             chestinventory.remove(item)
+            if item in itemLore:
+                activeLoreItem = item
+                showLore = True
         y += 75
 
     for item in chestinventory[6:10]:
@@ -341,6 +345,9 @@ def openChest(currentchest):
         if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
             inventory.append(item)
             chestinventory.remove(item)
+            if item in itemLore:
+                activeLoreItem = item
+                showLore = True
         y += 75
     
     for item in chestinventory[11:15]:
@@ -349,6 +356,9 @@ def openChest(currentchest):
         if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
             inventory.append(item)
             chestinventory.remove(item)
+            if item in itemLore:
+                activeLoreItem = item
+                showLore = True
         y += 75
     
     x = 1526
@@ -434,6 +444,16 @@ scale = image.load("Images/Collectables/Drogmirs Scales.png")
 horn = image.load("Images/Collectables/Hollows Horn.png")
 crown = image.load("Images/Collectables/Old Kings Crown.png")
 
+itemLore = {
+    claw:  ["~The Dragon's Claw~","Ripped from Drogmir the Dragons corpse.","Said to still twitch with cursed heat.","Indestructible"],
+    book:  ["~The Book of Skulls~","Contains the names of those sacrificed to the Hollow King.",
+            "The last page has symbols that have never been translated, but rumors say it has his true name.","Indestructible "],
+    puppet:["~The Cursed Puppet~","A tool used by traitors to manipulate the minds of the pure.","Unknown origins.",
+            "Rumored to belong to the Hollow King.","Destructable- damaging it leads to instant death (63 dead)"],
+    scale: ["~Drogmir's Scale~","Legends say it blocked the Hollow King's blade.","Emanates ancient, forgotten magic","Indestructible"],
+    horn:  ["~The Hollow’s Horn~","The Hollow Kings fathers horn.","Taken from his dead body","Blown only at the beginning of Velmara’s fall."],
+    crown: ["~The Old King’s Crown~","Oldest Velmarian artifact, passed on from the first Velmarian king", "Lost in the final battle before Velmara’s fall to shadow."]
+}
 weapons = {'Shinobi': transform.scale(image.load("Images/Weapons/Dagger.png").convert_alpha(), (32, 32)), 'Samurai': transform.scale(image.load("Images/Weapons/Katana.png").convert_alpha(), (32, 32))}  # Dictionary to hold weapon images
 weaponPic = 'None'  # Default weapon
 chests = [(560,130, [weapons['Samurai'], foodPic, foodPic]),(1764,2440,[claw]),(1402,1748,[puppet]),(2812,554,[scale]),(2452,2772,[horn]),(2208,3252,[crown]),(4412,2474,[book])]  # List to store location of chests
@@ -490,13 +510,15 @@ PICS = 8
 frame = 0
 start = False
 transition = True
-startRect = Rect(1263,423,320,50)
-scoreRect = Rect(705,545,190,42)
+startRect = Rect(1263,409,320,50)
+scoreRect = Rect(1346,758,234,122)
 running = True
 eating = False  # Flag to indicate if the player is eating
 slowPlayer = False
 opening = False  # Flag to indicate if a chest is being opened
 gameClock = time.Clock()
+showLore = False
+activeLoreItem = None
 
 introtext = [
         "Centuries ago...",
@@ -601,9 +623,9 @@ while running:
     if not start:
         screen.fill(0)
         screen.blit(title, (332, 9))
-        screen.blit(startbut,(1233,326))
+        screen.blit(startbut,(1233,312))
         screen.blit(scorebut,(1346,758))
-        draw.rect(screen,(255,0,0),startRect,1)
+        draw.rect(screen,(255,0,0),scoreRect,1)
         if mbd and mb[0] and startRect.collidepoint(mx, my):
             start = True
 
@@ -722,6 +744,23 @@ while running:
         drawOverlay(sprites[0][HEALTH])  # Draw the health bar
         drawInventory()
 
+        if showLore and activeLoreItem:
+            loreBox = Surface((750, 150))
+            loreBox.fill((25, 25, 25))
+
+            for i, line in enumerate(itemLore[activeLoreItem]):
+                text = font.SysFont("Georgia", 20).render(line.strip(), True, (255, 255, 255))
+                loreBox.blit(text, (10, 10 + i * 30))
+
+            screen.blit(loreBox, (50, 700))
+            draw.rect(loreBox, (215, 166, 83), (50,700,750,150), 3)
+
+            # Dismiss X
+            draw.rect(screen, (200, 60, 60), (530, 700, 30, 30))
+            xFont = font.SysFont("Arial", 24)
+            xText = xFont.render("X", True, (255, 255, 255))
+            screen.blit(xText, (537, 703))
+
         for item in droppedItems:
                 itempic, world_x, world_y = item
                 screen.blit(itempic, (world_x, world_y))
@@ -760,14 +799,7 @@ while running:
                 hunger += 65
                 inventory.remove(foodPic)  # Remove the food from inventory after eating
                 eatStart = mill
-    # if mbd and mb[0]:
-    #     for item in droppedItems[:]:
-    #         itempic, x, y = item
-    #         print(itempic)
-    #         itemRect = Rect(x,y,32,32)
-    #         if itemRect.collidepoint(mx, my) and len(inventory) < 9:
-    #             inventory.append(itempic)
-    #             droppedItems.remove(itempic)
+
         gameClock.tick(50)
         # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
         # # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
