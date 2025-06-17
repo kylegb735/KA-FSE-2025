@@ -5,7 +5,7 @@ from math import *
 
 screen = display.set_mode((1600,900))
 init()
-introfont = font.SysFont("Georgia",36)
+introfont = font.SysFont("Georgia",48)
 
 def getMoves(sprite): #get all files that contain images
     moves = []
@@ -44,6 +44,8 @@ def generateEnemy(spawnPoint):
         x += randint(-150, 150)
         y += randint(-150, 150)  # Random position for the enemy
         # print(len(sprites), x, y)
+    x -= offsetx  # Adjust for the current offset
+    y -= offsety  # Adjust for the current offset
     #               name                 hitbox                              move                 frame health       flipped  shield  moves                pics
     sprites.append([enemyTypes[type][0], Rect(x - 20, y - 60, 40, 60), 6, 0, enemyTypes[type][1], False, False,  enemyTypes[type][2], enemyTypes[type][3]])
 
@@ -100,18 +102,18 @@ def clear(maskX, maskY): # checks if the pixel at maskX, maskY is clear (not a w
 def movePlayer(sprite, globalx, globaly): # moves the map by x and y. Checks for walls
     x, y = 0, 0  # Initialize movement variables
     if keys[K_w] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + globaly - 14):
-        y -= 7  # Move up by 2 pixels
+        y -= 5  # Move up by 2 pixels
     if keys[K_s] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + 14 + globaly):
-        y += 7  # Move down by 2 pixels
+        y += 5  # Move down by 2 pixels
     if keys[K_a] and clear(sprite[HITBOX].centerx + globalx - 30, sprite[HITBOX].bottom + globaly):
-        x -= 7 # Move left by 2 pixels
+        x -= 5 # Move left by 2 pixels
         sprite[FLIPPED] = True  # Set flipped to False if moving right
     if keys[K_d] and clear(sprite[HITBOX].centerx + globalx + 30, sprite[HITBOX].bottom + globaly):
-        x += 7 # Move right by 2 pixels
+        x += 5 # Move right by 2 pixels
         sprite[FLIPPED] = False  # Set flipped to True if moving left
     global slowPlayer
     if slowPlayer:  # If the player is slowed by a spell
-        if mill - start < 5000:
+        if mill - spellStart < 7000:
             x *= 0.5
             y *= 0.5
         else:
@@ -161,11 +163,16 @@ def move(sprite, x, y, run=False): # moves the character (hitbox) by x and y. Se
     sprite[SHIELD] = False  # Reset shield state when moving
 
 def stop(sprite): # just sets the sprite to idle if it was moving
-    if sprite[MOVE] == sprite[MOVES].index('Walk') or sprite[MOVE] == sprite[MOVES].index('Run'):
+    if sprite[MOVE] == sprite[MOVES].index('Walk'):
         sprite[MOVE] = sprite[MOVES].index('Idle')
+    if 'Run' in sprite[MOVES]:
+        if sprite[MOVE] == sprite[MOVES].index('Run'):
+            sprite[MOVE] = sprite[MOVES].index('Idle')
 
 def hurt(sprite, amount): # reduces the sprite's health by amount
     sprite[HEALTH] -= amount
+    if not (sprite[NAME] == 'Boss' and sprite[MOVE] == sprite[MOVES].index('Attack')):  # If not the boss and not already hurt
+        changeMove(sprite, 'Hurt')  # Change to hurt move
     if sprite[HEALTH] <= 0:
         kill(sprite)
         sprite[HEALTH] = 0
@@ -235,6 +242,7 @@ def updateSprite(sprite, player=False): # updates the sprite's frame (and move f
         elif current == 'Dead':  # If the sprite is dead, stop updating
             sprite[FRAME] += 0.1  # Increment frame for dead animation
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
+                running = False  # If the player is dead, end the game
                 sprites.remove(sprite)  # Remove the sprite from the list
                 sprite[FRAME] -= .1 # Prevents frame from going out of bounds
 
@@ -403,17 +411,9 @@ offsetx, offsety = 0,0
 charType = 'Fighter'  # Default character type
 #         name     hitbox                move frame health flipped shield
 player = [charType, Rect(800,400,20,70), 5  , 0   , 200  , False, False]
-#        speed, dmg, def (def is % taken)
-fighter = [1.5, 0.7, 1  ]  # Fighter stats: speed, damage, defense
-shinobi = [1  , 1.2, 0.8]  # Shinobi stats: speed, damage, defensew
-samurai = [0.7, 1.6, 0.6]  # Samurai stats: speed, damage, defense
-stats = {'Fighter': fighter, 'Shinobi': shinobi, 'Samurai': samurai}  # Dictionary to hold character stats
-charSpeed, charDamage, charDefense = stats[player[0]]  # Set the player's stats based on the chosen character type
-player.append(getMoves(player[0]))
-player.append(getPics(player[0], player[7]))
 
 #        speed, dmg, def (def is % taken)
-fighter = [1.5, 0.7, 1  ]  # Fighter stats: speed, damage, defense
+fighter = [1.2, 0.7, 1  ]  # Fighter stats: speed, damage, defense
 shinobi = [1.2, 1.2, 0.8]  # Shinobi stats: speed, damage, defense
 samurai = [1  , 1.6, 0.6]  # Samurai stats: speed, damage, defense
 stats = {'Fighter': fighter, 'Shinobi': shinobi, 'Samurai': samurai}  # Dictionary to hold character stats
@@ -421,10 +421,10 @@ charSpeed, charDamage, charDefense = stats[player[0]]  # Set the player's stats 
 player.append(getMoves(player[0]))
 player.append(getPics(player[0], player[7]))
 hunger = 100  # Player's hunger level
-
+#                           dmg rng spell
 fightAttacks = {'Attack_1': (20,25, False), 'Attack_2': (15,30, False), 'Attack_3': (25,20, False)}
 shinAttacks  = {'Attack_1': (20,25, False), 'Attack_2': (15,30, False), 'Attack_3': (25,20, False)}
-samAttacks   = {'Attack_1': (20,25, False), 'Attack_2': (15,50, False), 'Attack_3': (25,30, False)}
+samAttacks   = {'Attack_1': (25,35, False), 'Attack_2': (20,50, False), 'Attack_3': (35,30, False)}
 
 #item & inventory stuff
 itemImages = loadItems()      # Loads all item images
@@ -488,6 +488,8 @@ boss = ['Boss', Rect(5500, 500, 40, 110), 3 , 0   , 750  , False, False]
 boss.append(getMoves(boss[0]))
 boss.append(getPics(boss[0], boss[7]))
 
+bossAttacks = {'Attack': (65, 45, False)}
+
 sprites = [player, boss]
 maxEnemies = 12  # Limit the number of enemies
 spawnPoints = [ (1700, 600), (800, 1300)]  # Predefined spawn points
@@ -495,7 +497,7 @@ for point in spawnPoints:
     for i in range(4):
         generateEnemy(point)  # Generate enemies at predefined spawn points
 
-attacks = {'berserker': berAttacks, 'shaman': shamanAttacks, 'warrior': warriorAttacks, 'Fighter':fightAttacks, 'Shinobi':shinAttacks, 'Samurai': samAttacks}  # Dictionary to hold attacks for each enemy type
+attacks = {'berserker': berAttacks, 'shaman': shamanAttacks, 'warrior': warriorAttacks, 'Fighter':fightAttacks, 'Shinobi':shinAttacks, 'Samurai': samAttacks, 'Boss': bossAttacks}  # Dictionary to hold attacks for each enemy type
 
 NAME = 0
 HITBOX = 1
@@ -516,6 +518,9 @@ running = True
 eating = False  # Flag to indicate if the player is eating
 slowPlayer = False
 opening = False  # Flag to indicate if a chest is being opened
+bossFight = False
+fight = 0
+respawning = False
 gameClock = time.Clock()
 showLore = False
 activeLoreItem = None
@@ -669,71 +674,214 @@ while running:
 
         # enemy behaviour
         for enemy in sprites[2:]:  # Skip the sprites[0]
-            # print(enemy[SHIELD])
-            d, dx, dy = getDist(enemy, sprites[0])
+            if not respawning:
+                # print(enemy[SHIELD])
+                d, dx, dy = getDist(enemy, sprites[0])
 
-            # berseker behaviour
-            if enemy[NAME] == 'berserker':
-                if 0 < enemy[HEALTH] < 50: # low health
-                    heal(enemy, 0.1)
-                    if d < 100: # close to player
-                        move(enemy, dx / d * -1, dy / d * -1, True)
+                # berseker behaviour
+                if enemy[NAME] == 'berserker':
+                    if 0 < enemy[HEALTH] < 50: # low health
+                        heal(enemy, 0.1)
+                        if d < 100: # close to player
+                            move(enemy, dx / d * -1, dy / d * -1, True)
+                        else:
+                            stop(enemy)
                     else:
-                        stop(enemy)
-                else:
-                    if 40 < d < 150 or -4 > dy > 4: # 40 - 150 from player. 
-                        if enemy[HEALTH] > 25:
-                            move(enemy, dx / d * .75, dy / d * .75)
-                    elif d < 40:
-                        stop(enemy)  # Stop if too close
-                        #         \/cooldown(milliseconds)
-                        if mill % 2000 < 250:  # Attack every second
-                            changeMove(enemy, 'Attack_1')
-                    else:
-                        stop(enemy)
+                        if 40 < d < 150 or -4 > dy > 4: # 40 - 150 from player. 
+                            if enemy[HEALTH] > 25:
+                                move(enemy, dx / d * .75, dy / d * .75)
+                        elif d < 40:
+                            stop(enemy)  # Stop if too close
+                            #         \/cooldown(milliseconds)
+                            if mill % 2000 < 250:  # Attack every second
+                                changeMove(enemy, 'Attack_1')
+                        else:
+                            stop(enemy)
 
-            # shaman behaviour
-            if enemy[NAME] == 'shaman':
-                if 0 < enemy[HEALTH] < 50:
-                    if d < 100:
-                        move(enemy, dx / d * -1.5, dy / d * -1.5)
-                    else:
-                        stop(enemy)
-                elif enemy[HEALTH] > 50:
-                    if 45 < d < 70:
-                        move(enemy, dx / d * 2, dy / d * 2)
-                    elif d < 45:
-                        stop(enemy)
-                        if mill % 2000 < 20:
-                            changeMove(enemy, 'Attack_1')
-                    elif 70 < d < 150:
-                        move(enemy, dx / d * -.75, dy / d * -.75)
-                        move(enemy, dx / d * .05, dy / d * .05) # turn to face player
-                    else:
-                        stop(enemy)
-                    if 80 < d < 160 and mill % 7000 < 20:
-                        changeMove(enemy, 'Attack_3') # earthquake
-                        slowPlayer = True  # Slow the player for a short duration
-                        spellStart = mill
-            
-            # warrior behaviour
-            if enemy[NAME] == 'warrior':
-                if enemy[HEALTH] > 0:
-                    if 70 < d < 150 or -4 > dy > 4:
-                        move(enemy, dx / d * 1.5, dy / d * 1.5, True)
-                    elif 40 < d < 70:
-                        move(enemy, dx / d, dy / d)
-                    elif d < 40:
-                        stop(enemy)
-                        if mill % 1500 < 50:
-                            changeMove(enemy, 'Attack_1')
-                    else:
-                        stop(enemy)
+                # shaman behaviour
+                if enemy[NAME] == 'shaman':
+                    if 0 < enemy[HEALTH] < 50:
+                        if d < 100:
+                            move(enemy, dx / d * -1.5, dy / d * -1.5)
+                        else:
+                            stop(enemy)
+                    elif enemy[HEALTH] > 50:
+                        if 45 < d < 70:
+                            move(enemy, dx / d * 2, dy / d * 2)
+                        elif d < 45:
+                            stop(enemy)
+                            if mill % 2000 < 20:
+                                changeMove(enemy, 'Attack_1')
+                        elif 70 < d < 150:
+                            move(enemy, dx / d * -.75, dy / d * -.75)
+                            move(enemy, dx / d * .05, dy / d * .05) # turn to face player
+                        else:
+                            stop(enemy)
+                        if 80 < d < 160 and mill % 7000 < 20:
+                            changeMove(enemy, 'Attack_3') # earthquake
+                            slowPlayer = True  # Slow the player for a short duration
+                            spellStart = mill
+                
+                # warrior behaviour
+                if enemy[NAME] == 'warrior':
+                    if enemy[HEALTH] > 0:
+                        if 70 < d < 150 or -4 > dy > 4:
+                            move(enemy, dx / d * 1.5, dy / d * 1.5, True)
+                        elif 40 < d < 70:
+                            move(enemy, dx / d, dy / d)
+                        elif d < 40:
+                            stop(enemy)
+                            if mill % 1500 < 50:
+                                changeMove(enemy, 'Attack_1')
+                        else:
+                            stop(enemy)
                     
             updateSprite(enemy)
 
-        
+        d, dx, dy = getDist(sprites[1], sprites[0])  # Get distance to boss
+        bossHealth = sprites[1][HEALTH]  # Get boss health
 
+        if d > 1000:  # If the player is more than 1000 pixels away from the boss
+            if mill % 10000 < 4000:  # Boss attacks every 2 seconds
+                move(sprites[1], 1, 0)  # Move towards the player
+            else:
+                stop(sprites[1])  # Stop if not attacking
+            if mill % 10000 > 6000:  # Boss attacks every 2 seconds
+                move(sprites[1], -1, 0)  # Move towards the player
+            else:
+                stop(sprites[1])  # Stop if not attacking
+        elif d > 500:
+            stop(sprites[1])  # Stop if within 1000 pixels of the boss
+
+        if d < 1000 and fight == 0:  # If the player is within 1000 pixls of the boss
+            for sprite in sprites[2:]:  # Skip the player and boss
+                kill(sprite)  # Remove all other enemies from the game
+            fight = 1  # Set boss fight flag to True
+            bossFight = True  # Set boss fight flag to True
+
+        if bossFight:  # If the boss fight is active
+            if fight == 1:  # If the boss is alive
+                cycle = 10000 # attack cycle length
+                if mill % cycle < 2500:
+                    move(sprites[1], dx / d * -1, dy / d * -1)  # Move towards the player
+                    move(sprites[1], dx / d * 0.1, dy / d * 0.1)  # Move towards the player
+                if 2500 < mill % cycle < 4500:
+                    if d > 50:  # If the player is more than 100 pixels away
+                        move(sprites[1], dx / d * 3, dy / d * 3)  # Move towards the player
+                    else:
+                        stop(sprites[1])
+                        changeMove(sprites[1], 'Attack')
+                if 5000 < mill % cycle:
+                    stop(sprites[1])  # Stop 
+                if 9000 < mill % cycle and d < 50:
+                    changeMove(sprites[1], 'Attack')
+                if bossHealth < 500:  # If the boss is dead and fight2 is not active
+                    fight = 2
+                    if len(sprites) < 3:
+                        for i in range(4):
+                            generateEnemy((4250, 400))  # Generate enemies at predefined spawn points
+                        respawnStart = mill
+                        respawning = True
+            if fight == 2:
+                if mill - respawnStart < 7000:
+                    move(sprites[1], -4, 0)
+                if mill - respawnStart < 5000:
+                    for sprite in sprites[2:]:  # Skip the player and boss
+                        d, dx, dy = getDist(sprite, sprites[0])  # Get distance to boss
+                        if d > 100:
+                            move(sprite, dx / d * 1.5, dy / d * 1.5)
+                        else:
+                            move(sprite, dx / d * -1.5, dy / d * -1.5)
+                else:
+                    move(sprites[1], .1, 0)
+                    respawning = False
+                if len(sprites) == 2:
+                    fight = 3
+                    chd, chdx, chdy = getDist(sprites[1], sprites[0])  # Get chdistance to player
+            if fight == 3:  # If the boss is alive
+                cycle = 15000 # attack cycle length
+                if mill % cycle < 1000:
+                    move(sprites[1], dx / d * -1, dy / d * -1)  # Move towards the player
+                    move(sprites[1], dx / d * 0.1, dy / d * 0.1)  # Move towards the player
+                    chd, chdx, chdy = getDist(sprites[1], sprites[0])  # Get chdistance to player
+                if 1000 < mill % cycle < 2500:
+                    move(sprites[1], chdx / chd * 5, chdy / chd * 5)  # Move towarchds the player
+                    if sprites[1][HITBOX].colliderect(sprites[0][HITBOX]):
+                        hurt(sprites[0], 10)
+                if 2500 < mill % cycle < 3000:
+                    chd, chdx, chdy = getDist(sprites[1], sprites[0])  # Get chdistance to player
+                if 3000 < mill % cycle < 4500:
+                    move(sprites[1], chdx / chd * 5, chdy / chd * 5)  # Move towarchds the player
+                    if sprites[1][HITBOX].colliderect(sprites[0][HITBOX]):
+                        hurt(sprites[0], 10)
+                if 4500 < mill % cycle < 5000:
+                    chd, chdx, chdy = getDist(sprites[1], sprites[0])  # Get chdistance to player
+                if 5000 < mill % cycle < 6500:
+                    move(sprites[1], chdx / chd * 5, chdy / chd * 5)  # Move towarchds the player
+                    if sprites[1][HITBOX].colliderect(sprites[0][HITBOX]):
+                        hurt(sprites[0], 10)
+                if 6500 < mill % cycle < 8000:
+                    if d > 50:  # If the player is more than 100 pixels away
+                        move(sprites[1], dx / d * 3, dy / d * 3)  # Move towards the player
+                    else:
+                        stop(sprites[1])
+                        changeMove(sprites[1], 'Attack')
+                if 8000 < mill % cycle:
+                    stop(sprites[1])  # Stop 
+                if 14200 < mill % cycle and d < 50:
+                    changeMove(sprites[1], 'Attack')
+                if bossHealth < 250:  # If the boss is dead and fight2 is not active
+                    fight = 4
+                    for i in range(7):
+                        generateEnemy((5500, 400))  # Generate enemies at predefined spawn points
+                    respawnStart = mill
+                    respawning = True
+            if fight == 4:
+                if mill - respawnStart < 7000:
+                    move(sprites[1], 4, 0)
+                if mill - respawnStart < 5000:
+                    for sprite in sprites[2:]:  # Skip the player and boss
+                        d, dx, dy = getDist(sprite, sprites[0])  # Get distance to boss
+                        if d > 100:
+                            move(sprite, dx / d * 2, dy / d * 2)
+                else:
+                    move(sprites[1], .1, 0)
+                    respawning = False
+                if len(sprites) == 2:
+                    fight = 5
+            if fight == 5:  # If the boss is alive
+                cycle = 15000 # attack cycle length
+                if mill % cycle < 1000:
+                    move(sprites[1], dx / d * -1, dy / d * -1)  # Move towards the player
+                    move(sprites[1], dx / d * 0.1, dy / d * 0.1)  # Move towards the player
+                    chd, chdx, chdy = getDist(sprites[1], sprites[0])  # Get chdistance to player
+                if 1000 < mill % cycle < 2500:
+                    move(sprites[1], chdx / chd * 5, chdy / chd * 5)  # Move towarchds the player
+                    if sprites[1][HITBOX].colliderect(sprites[0][HITBOX]):
+                        hurt(sprites[0], 10)
+                if 2500 < mill % cycle < 3000:
+                    chd, chdx, chdy = getDist(sprites[1], sprites[0])  # Get chdistance to player
+                if 3000 < mill % cycle < 4500:
+                    move(sprites[1], chdx / chd * 5, chdy / chd * 5)  # Move towarchds the player
+                    if sprites[1][HITBOX].colliderect(sprites[0][HITBOX]):
+                        hurt(sprites[0], 10)
+                if 4500 < mill % cycle < 5000:
+                    chd, chdx, chdy = getDist(sprites[1], sprites[0])  # Get chdistance to player
+                if 5000 < mill % cycle < 6500:
+                    move(sprites[1], chdx / chd * 5, chdy / chd * 5)  # Move towarchds the player
+                    if sprites[1][HITBOX].colliderect(sprites[0][HITBOX]):
+                        hurt(sprites[0], 10)
+                if 6500 < mill % cycle < 8000:
+                    if d > 50:  # If the player is more than 100 pixels away
+                        move(sprites[1], dx / d * 3, dy / d * 3)  # Move towards the player
+                    else:
+                        stop(sprites[1])
+                        changeMove(sprites[1], 'Attack')
+                if 8000 < mill % cycle:
+                    stop(sprites[1])  # Stop 
+                if 14200 < mill % cycle and d < 50:
+                    changeMove(sprites[1], 'Attack')
+                
         updateSprite(sprites[1], 'boss')  # Update the boss sprite
 
         updateSprite(sprites[0], 'player')
@@ -805,6 +953,6 @@ while running:
         # # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
         # # print(offsetx, offsety)  # Print player position for debugging
         # print(sprites[0][HEALTH])  # Print player stats
-        print(getDist(sprites[0], sprites[1]))  # Print distance to boss for debugging
+        # print(getDist(sprites[0], sprites[1]))  # Print distance to boss for debugging
     display.flip()
 quit()
