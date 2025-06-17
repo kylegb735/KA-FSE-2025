@@ -44,7 +44,7 @@ def generateEnemy(spawnPoint):
         x += randint(-150, 150)
         y += randint(-150, 150)  # Random position for the enemy
         # print(len(sprites), x, y)
-    #               name                 hitbox                                         move  frame    health       flipped  shield  moves                pics
+    #               name                 hitbox                              move                 frame health       flipped  shield  moves                pics
     sprites.append([enemyTypes[type][0], Rect(x - 20, y - 60, 40, 60), 6, 0, enemyTypes[type][1], False, False,  enemyTypes[type][2], enemyTypes[type][3]])
 
 def playerShield(sprite):
@@ -189,7 +189,7 @@ def flipped(sprite, frame): # flips the sprite if it is facing left
 def updateSprite(sprite, player=False): # updates the sprite's frame (and move for attacks)
     current = sprite[MOVES][sprite[MOVE]] # name of current move
 
-    if player:  # If the sprite is the player, handle special cases
+    if player == 'player':  # If the sprite is the player, handle special cases
         if current == 'Hurt':  # If the sprite is hurt, stop updating
             sprite[FRAME] += (0.15 * charSpeed) # updates frame
             print(sprite[FRAME], current)
@@ -215,6 +215,31 @@ def updateSprite(sprite, player=False): # updates the sprite's frame (and move f
 
         else: # all other moves
             sprite[FRAME] += (0.2 * charSpeed) # updates frame
+            if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
+                sprite[FRAME] = 0 # reset frames
+    elif player == 'boss':
+        if current == 'Hurt':  # If the sprite is hurt, stop updating
+            sprite[FRAME] += 0.15 # updates frame
+            if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
+                sprite[FRAME] = 0 # reset frames
+                sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
+
+        elif 'Attack' in current: # if they just did an attack
+            sprite[FRAME] += 0.2 # updates frame
+            if 2.9 < sprite[FRAME] < 3.1:
+                enemyAttack(sprite, current)  # Call enemy attack to handle damage
+            if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
+                sprite[FRAME] = 0 # reset frames
+                sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
+
+        elif current == 'Dead':  # If the sprite is dead, stop updating
+            sprite[FRAME] += 0.1  # Increment frame for dead animation
+            if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
+                sprites.remove(sprite)  # Remove the sprite from the list
+                sprite[FRAME] -= .1 # Prevents frame from going out of bounds
+
+        else: # all other moves
+            sprite[FRAME] += 0.2 # updates frame
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
     else:
@@ -362,9 +387,7 @@ title = image.load("Images/Maps/name.png")
 title = transform.scale(title, (936, 880))  
 
 
-offsetx = 0
-offsety = 0
-
+offsetx, offsety = 0,0
 
 # Sprite init stuff
 charType = 'Fighter'  # Default character type
@@ -433,7 +456,13 @@ shamanAttacks = {'Attack_1': (5,40, False), 'Attack_3': (10,100,True)}
 warriorAttacks = {'Attack_1': (20,30, False)}
 
 enemyTypes = [berserker, shaman, warrior]
-sprites = [player]
+
+#         name     hitbox             move frame health flipped shield
+boss = ['Boss', Rect(5500, 500, 40, 110), 3 , 0   , 750  , False, False]
+boss.append(getMoves(boss[0]))
+boss.append(getPics(boss[0], boss[7]))
+
+sprites = [player, boss]
 maxEnemies = 12  # Limit the number of enemies
 spawnPoints = [ (1700, 600), (800, 1300)]  # Predefined spawn points
 for point in spawnPoints:
@@ -555,7 +584,7 @@ while running:
                     opening = False
 
         # enemy behaviour
-        for enemy in sprites[1:]:  # Skip the sprites[0]
+        for enemy in sprites[2:]:  # Skip the sprites[0]
             # print(enemy[SHIELD])
             d, dx, dy = getDist(enemy, sprites[0])
 
@@ -619,7 +648,11 @@ while running:
                     
             updateSprite(enemy)
 
-        updateSprite(sprites[0], True)
+        
+
+        updateSprite(sprites[1], 'boss')  # Update the boss sprite
+
+        updateSprite(sprites[0], 'player')
 
         # if len(sprites) < maxEnemies + 1:  # Limit the number of enemies
         #     generateEnemy(choice(spawnPoints))
@@ -679,5 +712,6 @@ while running:
         # # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
         # # print(offsetx, offsety)  # Print player position for debugging
         # print(sprites[0][HEALTH])  # Print player stats
+        print(getDist(sprites[0], sprites[1]))  # Print distance to boss for debugging
     display.flip()
 quit()
