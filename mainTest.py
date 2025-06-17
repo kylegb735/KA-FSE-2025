@@ -260,9 +260,8 @@ def drawOverlay(health):
     screen.blit(healthBar,(1300,0))
     screen.blit(inventoryPic,(1515,115))
     screen.blit(transform.scale(goldPic,(48,48)), (1526, 152))  # Draw the gold icon
-    screen.blit(transform.scale(foodPic,(48,48)), (1526, 227))  # Draw the food icon
     if weaponPic != 'None':  # If a weapon is equipped
-        screen.blit(weaponPic, (1526, 302))  # Draw the weapon icon
+        screen.blit(transform.scale(weaponPic, (45,45)), (1529, 24))  # Draw the weapon icon
     if health < 200:
         draw.line(screen, (78,74,78), (1338, 16), (1338 + ((200 - health) * 0.75), 16), 15)  # Draw the health bar
     if hunger < 200:
@@ -286,9 +285,13 @@ def changeMain(main): # Change the player's main
     return Speed, Damage, Defense, weaponPic
 
 def drawInventory():
-    y = 451
+    y = 225
+    i = 0
     for item in inventory:
         screen.blit(transform.scale(item,(48,48)), (1526, y))
+        if eating and item == foodPic and inventory[i:].count(item) == 1:  # If the player is eating and the item is food
+            screen.blit(foodCover, (1526, y))  # Draw the food cover if eating
+        i += 1
         y += 75
 
 def openChest(currentchest):  
@@ -362,11 +365,6 @@ title = transform.scale(title, (936, 880))
 offsetx = 0
 offsety = 0
 
-items = ['Sword', 'Potion', 'Food']  # List of items that can be found in chests
-weapons = {'Shinobi': transform.scale(image.load("Images/Weapons/Dagger.png").convert_alpha(), (32, 32)), 'Samurai': transform.scale(image.load("Images/Weapons/Katana.png").convert_alpha(), (32, 32))}  # Dictionary to hold weapon images
-weaponPic = 'None'  # Default weapon
-chests = [(560,130, [weapons['Samurai']]),(1764,2440,[]),(1402,1748,[]),(2812,554,[]),(2452,2772,[]),(2208,3252,[]),(4412,2474,[])]  # List to store location of chests
-#,(1852,2560,[]),(1472,1834,[]),(2952,582,[]),(2574,1908,[]),(2318,3412,[]),(4632,2596,[])
 
 # Sprite init stuff
 charType = 'Fighter'  # Default character type
@@ -406,6 +404,11 @@ gold = 0  # Player's gold amount
 food = 0  # Player's food amount
 goldPic = image.load("Images/drops/gold.png")
 foodPic = image.load("Images/drops/food.png")
+
+weapons = {'Shinobi': transform.scale(image.load("Images/Weapons/Dagger.png").convert_alpha(), (32, 32)), 'Samurai': transform.scale(image.load("Images/Weapons/Katana.png").convert_alpha(), (32, 32))}  # Dictionary to hold weapon images
+weaponPic = 'None'  # Default weapon
+chests = [(560,130, [weapons['Samurai'], foodPic, foodPic]),(1764,2440,[]),(1402,1748,[]),(2812,554,[]),(2452,2772,[]),(2208,3252,[]),(4412,2474,[])]  # List to store location of chests
+#,(1852,2560,[]),(1472,1834,[]),(2952,582,[]),(2574,1908,[]),(2318,3412,[]),(4632,2596,[])
 
 NAME = 0
 HEALTH = 1
@@ -451,11 +454,12 @@ PICS = 8
 
 cont1 = False
 frame = 0
-start = False
+start = True
 transition = True
 startRect = Rect(1263,423,320,50)
 scoreRect = Rect(705,545,190,42)
 running = True
+eating = False  # Flag to indicate if the player is eating
 slowPlayer = False
 opening = False  # Flag to indicate if a chest is being opened
 gameClock = time.Clock()
@@ -639,7 +643,7 @@ while running:
             openChest(currentchest)  # Open the chest if within range and Q is pressed
 
 
-        if time.get_ticks() % 15000 < 50:
+        if time.get_ticks() % 20000 < 50:
             hunger -= 5
             print(hunger)
             if hunger < 30:
@@ -647,17 +651,19 @@ while running:
             elif hunger <= 0:
                 hurt(sprites[0], 10)
         
-        if keys[K_2] and hunger < 200:  # If the player presses 2 and hunger is below 200
+        if keys[K_2] and hunger < 200 and foodPic in inventory:  # If the player presses 2 and hunger is below 200
             if kd:
                 eatStart = mill  # Start eating when the key is pressed
+                eating = True  # Set eating flag to True
             foodCover = Surface((49, 51))  # Create a surface for the food cover
             foodCover.fill((0, 0, 0, 0))
             foodCover.set_colorkey((0, 0, 0))
             foodCover.set_alpha(200)
-            draw.rect(foodCover, (111, 111, 111), (0, (0 + (mill - eatStart) / 2000 * 49), 49, 51 - (mill - eatStart) / 2000 * 49))  # Draw the chest overlay
-            screen.blit(foodCover, (1526, 225))  # Draw the food cover
+            draw.rect(foodCover, (111, 111, 111), (0, (0 + (mill - eatStart) / 2000 * 49), 49, 51 - (mill - eatStart) / 2000 * 49))
             if mill - eatStart > 2000:
-                hunger += 15
+                eating = False  # Reset eating flag after 2 seconds
+                hunger += 65
+                inventory.remove(foodPic)  # Remove the food from inventory after eating
                 eatStart = mill
     # if mbd and mb[0]:
     #     for item in droppedItems[:]:
