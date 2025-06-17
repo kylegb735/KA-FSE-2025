@@ -404,10 +404,16 @@ gold = 0  # Player's gold amount
 food = 0  # Player's food amount
 goldPic = image.load("Images/drops/gold.png")
 foodPic = image.load("Images/drops/food.png")
+claw = image.load("Images/Collectables/Dragons Claw.png")
+book = image.load("Images/Collectables/Book of Skulls.png")
+puppet = image.load("Images/Collectables/Cursed Puppet.png")
+scale = image.load("Images/Collectables/Drogmirs Scales.png")
+horn = image.load("Images/Collectables/Hollows Horn.png")
+crown = image.load("Images/Collectables/Old Kings Crown.png")
 
 weapons = {'Shinobi': transform.scale(image.load("Images/Weapons/Dagger.png").convert_alpha(), (32, 32)), 'Samurai': transform.scale(image.load("Images/Weapons/Katana.png").convert_alpha(), (32, 32))}  # Dictionary to hold weapon images
 weaponPic = 'None'  # Default weapon
-chests = [(560,130, [weapons['Samurai'], foodPic, foodPic]),(1764,2440,[]),(1402,1748,[]),(2812,554,[]),(2452,2772,[]),(2208,3252,[]),(4412,2474,[])]  # List to store location of chests
+chests = [(560,130, [weapons['Samurai'], foodPic, foodPic]),(1764,2440,[claw]),(1402,1748,[puppet]),(2812,554,[scale]),(2452,2772,[horn]),(2208,3252,[crown]),(4412,2474,[book])]  # List to store location of chests
 #,(1852,2560,[]),(1472,1834,[]),(2952,582,[]),(2574,1908,[]),(2318,3412,[]),(4632,2596,[])
 
 NAME = 0
@@ -673,7 +679,6 @@ while running:
     #         if itemRect.collidepoint(mx, my) and len(inventory) < 9:
     #             inventory.append(itempic)
     #             droppedItems.remove(itempic)
-    
         gameClock.tick(50)
         # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
         # # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
