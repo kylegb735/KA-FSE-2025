@@ -92,8 +92,8 @@ def playerAttack(sprite, move): # handles player attacks
             hurt(enemy, damage)
             print('hit')
 
-def changeMove(sprite, move): # changes the sprite's move to the specified move, resets frame if it was idle
-    if sprite[MOVE] != sprite[MOVES].index('Dead') and sprite[MOVE] != sprite[MOVES].index(move):  # If not already dead or the same move
+def changeMove(sprite, move): # changes the sprite's move to the specified move, with some conditions
+    if sprite[MOVE] != sprite[MOVES].index('Dead') and sprite[MOVE] != sprite[MOVES].index(move):  # If not dead or the same move
         index = sprite[MOVES].index(move) # gets the index of the move
         sprite[MOVE] = index # sets the move to the index of the move
         sprite[FRAME] = 0 # resets the frame
@@ -638,6 +638,7 @@ introtext = [
         "Or die trying...",
         ]
     
+# intro screen
 for a in range(40):
     introtextcover = Surface((1600,900))
     introtextcover.fill(0)
@@ -651,7 +652,7 @@ for a in range(40):
 
 waiting = True
 
-while waiting:
+while waiting: # waiting for player to hit continue
     for evnt in event.get():
         if evnt.type == QUIT:
             quit()
@@ -669,6 +670,7 @@ while waiting:
 
 screen.fill(0)
 
+# Fade in the title screen
 for a in range(40):
     print(a)
     introtextcover = Surface((1600,900))
@@ -692,7 +694,7 @@ for a in range(50):
 
 waiting = True
 
-while waiting:
+while waiting: # waiting for player to hit continue
     for evnt in event.get():
         if evnt.type == QUIT:
             quit()
@@ -724,7 +726,7 @@ while running:
     keys = key.get_pressed()
     mx, my = mouse.get_pos()
 
-    if not start:
+    if not start: # before game starts (menu)
         screen.fill(0)
         screen.blit(title, (332, 9))
         screen.blit(startbut,(1233,312))
@@ -737,13 +739,14 @@ while running:
     if start:
         drawScene(screen, offsetx, offsety)  # Draw the background and mask
 
-        playerShield(sprites[0])
+        playerShield(sprites[0]) # update the player's shield
 
         offsetx, offsety = movePlayer(sprites[0], offsetx, offsety)  # Move the player character based on input
 
         if ku and keys[K_d] == False and keys[K_a] == False and keys[K_w] == False and keys[K_s] == False:
-            stop(sprites[0])
+            stop(sprites[0]) # this stops the moving animation for the character after they stop
         if kd:
+            # change stats of the player based on their type
             if keys[K_f]:
                 charSpeed, charDamage, charDefense, weaponPic = changeMain('Fighter')
             if keys[K_g]:
