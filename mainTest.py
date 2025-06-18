@@ -7,6 +7,7 @@ screen = display.set_mode((1600,900))
 init()
 introfont = font.SysFont("Georgia",36)
 mixer.music.load("Music/ominous.mp3")
+mixer.music.set_volume(0.5)
 def running():
     for evt in event.get():
         if evt.type == QUIT:
@@ -201,12 +202,13 @@ def flipped(sprite, frame): # flips the sprite if it is facing left
     return frame
 
 def updateSprite(sprite, player=False): # updates the sprite's frame (and move for attacks)
+    global gameover
     current = sprite[MOVES][sprite[MOVE]] # name of current move
 
     if player == 'player':  # If the sprite is the player, handle special cases
         if current == 'Hurt':  # If the sprite is hurt, stop updating
             sprite[FRAME] += (0.15 * charSpeed) # updates frame
-            print(sprite[FRAME], current)
+            # print(sprite[FRAME], current)
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
                 sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
@@ -223,6 +225,8 @@ def updateSprite(sprite, player=False): # updates the sprite's frame (and move f
             sprite[FRAME] += 0.1  # Increment frame for dead animation
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 global running
+                if not victory:
+                    gameover = True
                 running = False  # If the player is dead, end the game
                 sprites.remove(sprite)  # Remove the sprite from the list
                 sprite[FRAME] -= .1 # Prevents frame from going out of bounds
@@ -298,6 +302,8 @@ def drawScene(screen, x, y):
         screen.blit(wall,(3850-x,700-y))
 
 def drawOverlay(health):
+    missionlist = ["Missions"]
+    
     screen.blit(fade,(-160,-90))
     screen.blit(healthBar,(1300,0))
     screen.blit(inventoryPic,(1515,115))
@@ -310,6 +316,17 @@ def drawOverlay(health):
         draw.line(screen, (78,74,78), (1338, 16), (1338 + ((200 - health) * 0.75), 16), 15)  # Draw the health bar
     if hunger < 200:
         draw.line(screen, (78,74,78), (1338, 47), (1338 + ((200 - hunger) * 0.75), 47), 15)
+    for i in [claw, book, puppet, scale, horn, crown]:
+        if i not in inventory and i not in chests[7][2]:
+            name = itemLore[i][0].replace("~", "")
+            missionlist.append(f"       Find {name}")
+    
+    missionlist.append("Find the Hollow King")
+    missionlist.append("Kill the Hollow King")
+
+    for a, line in enumerate(missionlist):
+            introtxt = font.SysFont("Georgia",18).render(line, True, (215, 166, 83))
+            screen.blit(introtxt, (10, 10 + a * 25))
 
 def getDist(sprite1, sprite2): # calculates the distance between two sprites
     dx = sprite2[HITBOX].centerx - sprite1[HITBOX].centerx
@@ -330,10 +347,8 @@ def changeMain(main): # Change the player's main
 def drawInventory(): # draws the inventory items on the right side of the screen
     y = 225
     i = 0
-    print(covers)
     for item in inventory:
         screen.blit(transform.scale(item,(48,48)), (1526, y))
-        print(covers[i], i)
         if covers[i] != None: # if there is a cover for the item, draw it
             screen.blit(covers[i], (1526, y + (51 - covers[i].get_height())))
         i += 1
@@ -622,6 +637,8 @@ respawning = False
 gameClock = time.Clock()
 showLore = False
 activeLoreItem = None
+victory = False
+gameover = False
 
 mixer.music.play()
 introtext = [
@@ -993,6 +1010,9 @@ while running:
                     stop(sprites[1])  # Stop 
                 if 14200 < mill % cycle and d < 50:
                     changeMove(sprites[1], 'Attack')
+                if sprites[1][HEALTH] <= 0 and not victory:
+                    victory = True
+                    running = False
                 
         updateSprite(sprites[1], 'boss')  # Update the boss sprite
 
@@ -1068,8 +1088,56 @@ while running:
 
 
         print(gold)
+        if keys[K_2] and hunger < 200 and foodPic in inventory:  # If the player presses 2 and hunger is below 200
+            if kd:
+                eatStart = mill  # Start eating when the key is pressed
+                eating = True  # Set eating flag to True
+            foodCover = Surface((49, 51))  # Create a surface for the food cover
+            foodCover.fill((0, 0, 0, 0))
+            foodCover.set_colorkey((0, 0, 0))
+            foodCover.set_alpha(200)
+            draw.rect(foodCover, (111, 111, 111), (0, (0 + (mill - eatStart) / 2000 * 49), 49, 51 - (mill - eatStart) / 2000 * 49))
+            if mill - eatStart > 2000:
+                eating = False  # Reset eating flag after 2 seconds
+                hunger += 65
+                inventory.remove(foodPic)  # Remove the food from inventory after eating
+                eatStart = mill
+        
+        if gameover:
+            screen.fill((0, 0, 0))
+            endFont = font.SysFont("Georgia", 64)
+
+            if gameover:
+                
+                endText = endFont.render("You Died. Velmara is lost...", True, (200, 60, 60))
+            else:
+                endText = endFont.render("You did it. Velmara is free!", True, (100, 255, 100))
+
+            for a in range(40):
+                cover = Surface((1600,900))
+                cover.fill(0)
+                cover.set_alpha(a)
+                cover.blit(endText,(400,400))
+                screen.blit(cover,(0,0))
+                display.flip()
+                time.wait(20)
+                
+            waiting = True
+
+            while waiting:
+                for evnt in event.get():
+                    if evnt.type == QUIT:
+                        quit()
+                    if evnt.type == MOUSEBUTTONDOWN and evnt.button == 1:
+                        waiting = False
+
+                display.flip()
+                time.wait(30)
+        
+
+
         gameClock.tick(50)
-        # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
+        print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
         # # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
         # # print(offsetx, offsety)  # Print player position for debugging
         # print(sprites[0][HEALTH])  # Print player stats
