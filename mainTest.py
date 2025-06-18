@@ -5,7 +5,7 @@ from math import *
 
 screen = display.set_mode((1600,900))
 init()
-introfont = font.SysFont("Georgia",48)
+introfont = font.SysFont("Georgia",36)
 
 def getMoves(sprite): #get all files that contain images
     moves = []
@@ -94,6 +94,8 @@ def changeMove(sprite, move): # changes the sprite's move to the specified move,
         sprite[FRAME] = 0 # resets the frame
 
 def clear(maskX, maskY): # checks if the pixel at maskX, maskY is clear (not a wall)
+    if bossWall and BOSSWALL.collidepoint(maskX, maskY):
+        return False
     if maskX < 0 or maskX >= mask.get_width() or maskY < 0 or maskY >= mask.get_height():
         return False
     else:
@@ -286,20 +288,22 @@ def drawSprite(sprite):
 def drawScene(screen, x, y):
     ''' As always, ALL drawing happens here '''
     screen.blit(mapp, (-x, -y))
-    
+    if bossWall:
+        screen.blit(wall,(3750-x,700-y))
 
 def drawOverlay(health):
     screen.blit(fade,(-160,-90))
     screen.blit(healthBar,(1300,0))
     screen.blit(inventoryPic,(1515,115))
     screen.blit(transform.scale(goldPic,(48,48)), (1526, 152))  # Draw the gold icon
+    goldText = font.SysFont("Georgia", 20).render(f"{str(gold)}", True, (255, 255, 0))
+    screen.blit(goldText, (1578, 160))
     if weaponPic != 'None':  # If a weapon is equipped
         screen.blit(transform.scale(weaponPic, (45,45)), (1529, 24))  # Draw the weapon icon
     if health < 200:
         draw.line(screen, (78,74,78), (1338, 16), (1338 + ((200 - health) * 0.75), 16), 15)  # Draw the health bar
     if hunger < 200:
         draw.line(screen, (78,74,78), (1338, 47), (1338 + ((200 - hunger) * 0.75), 47), 15)
-
 
 def getDist(sprite1, sprite2):
     dx = sprite2[HITBOX].centerx - sprite1[HITBOX].centerx
@@ -328,29 +332,28 @@ def drawInventory():
         y += 75
 
 def openChest(currentchest):  
-    global activeLoreItem, showLore
+    global activeLoreItem, showLore, gold, bossWall
     screen.blit(insidechest,(1250,439))
     chestinventory = currentchest[2]
-    print(chestinventory)
 
     x = 1261
     y = 451
-
+    
     for item in chestinventory[:5]:
-        screen.blit(transform.scale(item,(48,48)), (x, y))
-        itemRect = Rect(x, y, 48, 48)
-        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
-            inventory.append(item)
-            chestinventory.remove(item)
-            if item in itemLore:
-                activeLoreItem = item
-                showLore = True
-        y += 75
+            screen.blit(transform.scale(item,(48,48)), (x, y))
+            itemRect = Rect(x, y, 48, 48)
+            if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 8:
+                inventory.append(item)
+                chestinventory.remove(item)
+                if item in itemLore:
+                    activeLoreItem = item
+                    showLore = True
+            y += 75
 
-    for item in chestinventory[6:10]:
+    for item in chestinventory[5:10]:
         screen.blit(transform.scale(item,(48,48)), (x + 75, y - 375))
         itemRect = Rect(x + 75, y - 375, 48, 48)
-        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
+        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 8:
             inventory.append(item)
             chestinventory.remove(item)
             if item in itemLore:
@@ -358,27 +361,42 @@ def openChest(currentchest):
                 showLore = True
         y += 75
     
-    for item in chestinventory[11:15]:
+    for item in chestinventory[10:14]:
         screen.blit(transform.scale(item,(48,48)), (x + 149, y - 750))
         itemRect = Rect(x + 149, y - 750, 48, 48)
-        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 9:
+        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(inventory) < 8:
             inventory.append(item)
             chestinventory.remove(item)
             if item in itemLore:
                 activeLoreItem = item
                 showLore = True
         y += 75
-    
-    x = 1526
-    y = 451
-
-    for item in inventory:
-        # screen.blit(transform.scale(item, (48, 48)), (x, y))
-        itemRect = Rect(x, y, 48, 48)
-        if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(chestinventory) < 15:  
-            chestinventory.append(item)
-            inventory.remove(item)
-        y += 75
+        
+    if currentchest[3] == 1:
+        y = 225
+        screen.blit(insidechest,(1250,439))
+        for item in inventory:
+                itemRect = Rect(1526, y, 48, 48)
+                if mbd and mb[0] and itemRect.collidepoint(mx, my):  
+                    if item in itemLore:
+                            currentchest[2].append(item)
+                            inventory.remove(item)
+                            if all(i in chestinventory for i in [claw, book, puppet, scale, horn, crown]):
+                                bossWall = False
+                    else:
+                        inventory.remove(item)
+                        global gold
+                        gold += 10
+                y += 75
+    else:
+        y = 225
+        for item in inventory:
+                itemRect = Rect(1526, y, 48, 48)
+                if mbd and mb[0] and itemRect.collidepoint(mx, my) and len(chestinventory) < 15:  
+                    chestinventory.append(item)
+                    inventory.remove(item)
+                y += 75
+        
 
 #health & inventory stuff
 healthBar = image.load("Images/Bars/health.png")
@@ -393,12 +411,16 @@ mask = image.load("Images/Maps/mask3.png")
 mask = transform.scale(mask, (6400, 3600))  # Scale the mask to fit the screen
 mapp = image.load("Images/Maps/map2.png")
 mapp = transform.scale(mapp, (6400, 3600)).convert()  # Scale the mask to fit the screen
+wall = transform.scale(image.load("Images/Maps/wall.png"),(128,128))
 fade = image.load("Images/Maps/fade.png")
 WALL = (225,135,250,255)
+BOSSWALL = Rect(3750, 736, 216, 14)
+bossWall = True
 
 #buttons
 startbut = image.load("Images/buttons/start3.png")
 scorebut = image.load("Images/buttons/score3.png")
+
 
 #title
 title = image.load("Images/Maps/name.png")
@@ -456,8 +478,16 @@ itemLore = {
 }
 weapons = {'Shinobi': transform.scale(image.load("Images/Weapons/Dagger.png").convert_alpha(), (32, 32)), 'Samurai': transform.scale(image.load("Images/Weapons/Katana.png").convert_alpha(), (32, 32))}  # Dictionary to hold weapon images
 weaponPic = 'None'  # Default weapon
-chests = [(560,130, [weapons['Samurai'], foodPic, foodPic]),(1764,2440,[claw]),(1402,1748,[puppet]),(2812,554,[scale]),(2452,2772,[horn]),(2208,3252,[crown]),(4412,2474,[book])]  # List to store location of chests
-#,(1852,2560,[]),(1472,1834,[]),(2952,582,[]),(2574,1908,[]),(2318,3412,[]),(4632,2596,[])
+chests = [
+    (560,130, [weapons['Samurai']] + [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))], 0),
+    (1764,2440,[claw]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
+    (1402,1748,[puppet]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
+    (2812,554,[scale]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
+    (2452,2772,[horn]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
+    (2208,3252,[crown]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
+    (4412,2474,[book]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
+    (5792,2505,[],1)
+    ]  # List to store location of chests
 
 NAME = 0
 HEALTH = 1
@@ -525,6 +555,7 @@ gameClock = time.Clock()
 showLore = False
 activeLoreItem = None
 
+"""
 introtext = [
         "Centuries ago...",
         "The Mad King Minos waged a terrible war",
@@ -605,7 +636,7 @@ while waiting:
     screen.blit(introfont.render("Click to continue", True, (215, 166, 83)), (1325, 850))
     display.flip()
     time.wait(30)
-
+"""
 while running:
     mill = time.get_ticks()  # Get the current time in milliseconds
     mbd = False
@@ -662,15 +693,24 @@ while running:
 
         for chest in chests:  # Check for chests
             d = hypot(sprites[0][HITBOX].centerx - (chest[0] - offsetx), sprites[0][HITBOX].centery - (chest[1] - offsety))
-            if d < 50 and not opening:
+            if (chest[3] != 1 and d < 50) and not opening:
                 currentchest = chest
                 print('Q to open chest')
                 if keys[K_q] and d < 50:
                     opening = True
+            elif (chest[3] == 1 and d < 200) and not opening:
+                currentchest = chest
+                print('Q to open chest')
+                if keys[K_q] and d < 200:
+                    opening = True
             if opening :
                 currentd = hypot(sprites[0][HITBOX].centerx - (currentchest[0] - offsetx), sprites[0][HITBOX].centery - (currentchest[1] - offsety))
-                if currentd > 50 or keys[K_ESCAPE]:
-                    opening = False
+                if currentchest[3] != 1:
+                    if currentd > 50 or keys[K_ESCAPE]:
+                        opening = False
+                else:
+                    if currentd > 200 or keys[K_ESCAPE]:
+                        opening = False
 
         # enemy behaviour
         for enemy in sprites[2:]:  # Skip the sprites[0]
@@ -893,7 +933,7 @@ while running:
         drawInventory()
 
         if showLore and activeLoreItem:
-            loreBox = Surface((750, 150))
+            loreBox = Surface((500, 150))
             loreBox.fill((25, 25, 25))
 
             for i, line in enumerate(itemLore[activeLoreItem]):
@@ -901,13 +941,16 @@ while running:
                 loreBox.blit(text, (10, 10 + i * 30))
 
             screen.blit(loreBox, (50, 700))
-            draw.rect(loreBox, (215, 166, 83), (50,700,750,150), 3)
+            draw.rect(loreBox, (215, 166, 83), (50,700,500,150), 3)
 
             # Dismiss X
             draw.rect(screen, (200, 60, 60), (530, 700, 30, 30))
             xFont = font.SysFont("Arial", 24)
             xText = xFont.render("X", True, (255, 255, 255))
             screen.blit(xText, (537, 703))
+            xRect = Rect(530, 700, 30, 30)
+            if mbd and mb[0] and xRect.collidepoint(mx, my):
+                showLore = False
 
         for item in droppedItems:
                 itempic, world_x, world_y = item
@@ -927,7 +970,6 @@ while running:
 
         if time.get_ticks() % 20000 < 50:
             hunger -= 5
-            print(hunger)
             if hunger < 30:
                 slowPlayer = True  # Slow the player if hunger is low
             elif hunger <= 0:
@@ -947,12 +989,14 @@ while running:
                 hunger += 65
                 inventory.remove(foodPic)  # Remove the food from inventory after eating
                 eatStart = mill
-
+        
+        print(gold)
         gameClock.tick(50)
         # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
         # # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
         # # print(offsetx, offsety)  # Print player position for debugging
         # print(sprites[0][HEALTH])  # Print player stats
         # print(getDist(sprites[0], sprites[1]))  # Print distance to boss for debugging
+        
     display.flip()
 quit()
