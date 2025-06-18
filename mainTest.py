@@ -324,10 +324,12 @@ def changeMain(main): # Change the player's main
 def drawInventory():
     y = 225
     i = 0
+    print(covers)
     for item in inventory:
         screen.blit(transform.scale(item,(48,48)), (1526, y))
-        if eating and item == foodPic and inventory[i:].count(item) == 1:  # If the player is eating and the item is food
-            screen.blit(foodCover, (1526, y))  # Draw the food cover if eating
+        print(covers[i], i)
+        if covers[i] != None:
+            screen.blit(covers[i], (1526, y + (51 - covers[i].get_height())))
         i += 1
         y += 75
 
@@ -396,7 +398,28 @@ def openChest(currentchest):
                     chestinventory.append(item)
                     inventory.remove(item)
                 y += 75
-        
+
+def eat(pos):
+    global eatStart, eating, foodCover, hunger
+    if hunger < 200 and foodPic in inventory:
+        if kd:
+            eatStart = mill  # Start eating when the key is pressed
+            eating = True  # Set eating flag to True
+        foodCover = makeCover(eatStart)  # Create a surface for the food cover
+        covers[pos] = foodCover  # Add the food cover to the covers list
+        if mill - eatStart > 2000:
+            eating = False  # Reset eating flag after 2 seconds
+            hunger += 65
+            inventory.remove(foodPic)  # Remove the food from inventory after eating
+            eatStart = mill
+
+def makeCover(start):
+    foodCover = Surface((49, 51))  # Create a surface for the food cover
+    foodCover.fill((0, 0, 0, 0))
+    foodCover.set_colorkey((0, 0, 0))
+    foodCover.set_alpha(200)
+    draw.rect(foodCover, (111, 111, 111), (0, (0 + (mill - start) / 2000 * 49), 49, 51 - (mill - start) / 2000 * 49))
+    return foodCover  # Return the food cover surface
 
 #health & inventory stuff
 healthBar = image.load("Images/Bars/health.png")
@@ -416,6 +439,9 @@ fade = image.load("Images/Maps/fade.png")
 WALL = (225,135,250,255)
 BOSSWALL = Rect(3750, 736, 216, 14)
 bossWall = True
+covers = []  # List to hold cover surfaces for eating
+for i in range(9):
+    covers.append(None)
 
 #buttons
 startbut = image.load("Images/buttons/start3.png")
@@ -444,15 +470,13 @@ player.append(getMoves(player[0]))
 player.append(getPics(player[0], player[7]))
 hunger = 100  # Player's hunger level
 #                           dmg rng spell
-fightAttacks = {'Attack_1': (20,25, False), 'Attack_2': (15,30, False), 'Attack_3': (25,20, False)}
+fightAttacks = {'Attack_1': (15,25, False), 'Attack_2': (10,30, False), 'Attack_3': (20,20, False)}
 shinAttacks  = {'Attack_1': (20,25, False), 'Attack_2': (15,30, False), 'Attack_3': (25,20, False)}
 samAttacks   = {'Attack_1': (25,35, False), 'Attack_2': (20,50, False), 'Attack_3': (35,30, False)}
 
 #item & inventory stuff
 itemImages = loadItems()      # Loads all item images
 droppedItems = []             # Each is [image, x, y]
-inventory = []               
-inventory = []
 
 
 gold = 0  # Player's gold amount
@@ -465,6 +489,7 @@ puppet = image.load("Images/Collectables/Cursed Puppet.png")
 scale = image.load("Images/Collectables/Drogmirs Scales.png")
 horn = image.load("Images/Collectables/Hollows Horn.png")
 crown = image.load("Images/Collectables/Old Kings Crown.png")
+inventory = [foodPic]
 
 itemLore = {
     claw:  ["~The Dragon's Claw~","Ripped from Drogmir the Dragons corpse.","Said to still twitch with cursed heat.","Indestructible"],
@@ -975,20 +1000,8 @@ while running:
             elif hunger <= 0:
                 hurt(sprites[0], 10)
         
-        if keys[K_2] and hunger < 200 and foodPic in inventory:  # If the player presses 2 and hunger is below 200
-            if kd:
-                eatStart = mill  # Start eating when the key is pressed
-                eating = True  # Set eating flag to True
-            foodCover = Surface((49, 51))  # Create a surface for the food cover
-            foodCover.fill((0, 0, 0, 0))
-            foodCover.set_colorkey((0, 0, 0))
-            foodCover.set_alpha(200)
-            draw.rect(foodCover, (111, 111, 111), (0, (0 + (mill - eatStart) / 2000 * 49), 49, 51 - (mill - eatStart) / 2000 * 49))
-            if mill - eatStart > 2000:
-                eating = False  # Reset eating flag after 2 seconds
-                hunger += 65
-                inventory.remove(foodPic)  # Remove the food from inventory after eating
-                eatStart = mill
+        if keys[K_2]:  # If the player presses 2 and hunger is below 200
+            eat(0)  # Eat food at position 1
         
         print(gold)
         gameClock.tick(50)
