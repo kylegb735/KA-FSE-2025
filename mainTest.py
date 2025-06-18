@@ -6,6 +6,12 @@ from math import *
 screen = display.set_mode((1600,900))
 init()
 introfont = font.SysFont("Georgia",36)
+mixer.music.load("Music/ominous.mp3")
+def running():
+    for evt in event.get():
+        if evt.type == QUIT:
+            return False
+    return True
 
 def getMoves(sprite): #get all files that contain images
     moves = []
@@ -290,6 +296,7 @@ def drawScene(screen, x, y):
     screen.blit(mapp, (-x, -y))
     if bossWall:
         screen.blit(wall,(3750-x,700-y))
+        screen.blit(wall,(3850-x,700-y))
 
 def drawOverlay(health):
     screen.blit(fade,(-160,-90))
@@ -381,6 +388,7 @@ def openChest(currentchest):
                     if item in itemLore:
                             currentchest[2].append(item)
                             inventory.remove(item)
+                            req = [claw, book, puppet, scale, horn, crown]
                             if all(i in chestinventory for i in [claw, book, puppet, scale, horn, crown]):
                                 bossWall = False
                     else:
@@ -414,7 +422,7 @@ mapp = transform.scale(mapp, (6400, 3600)).convert()  # Scale the mask to fit th
 wall = transform.scale(image.load("Images/Maps/wall.png"),(128,128))
 fade = image.load("Images/Maps/fade.png")
 WALL = (225,135,250,255)
-BOSSWALL = Rect(3750, 736, 216, 14)
+BOSSWALL = Rect(3750, 786, 216, 14)
 bossWall = True
 
 #buttons
@@ -555,7 +563,7 @@ gameClock = time.Clock()
 showLore = False
 activeLoreItem = None
 
-"""
+mixer.music.play()
 introtext = [
         "Centuries ago...",
         "The Mad King Minos waged a terrible war",
@@ -636,7 +644,7 @@ while waiting:
     screen.blit(introfont.render("Click to continue", True, (215, 166, 83)), (1325, 850))
     display.flip()
     time.wait(30)
-"""
+
 while running:
     mill = time.get_ticks()  # Get the current time in milliseconds
     mbd = False
@@ -664,6 +672,7 @@ while running:
         draw.rect(screen,(255,0,0),scoreRect,1)
         if mbd and mb[0] and startRect.collidepoint(mx, my):
             start = True
+            mixer.music.stop()
 
     if start:
         drawScene(screen, offsetx, offsety)  # Draw the background and mask
