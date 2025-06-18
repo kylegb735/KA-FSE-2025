@@ -672,7 +672,6 @@ while running:
         draw.rect(screen,(255,0,0),scoreRect,1)
         if mbd and mb[0] and startRect.collidepoint(mx, my):
             start = True
-            mixer.music.stop()
 
     if start:
         drawScene(screen, offsetx, offsety)  # Draw the background and mask
