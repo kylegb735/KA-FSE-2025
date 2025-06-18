@@ -208,7 +208,7 @@ def updateSprite(sprite, player=False): # updates the sprite's frame (and move f
 
         elif 'Attack' in current: # if they just did an attack
             sprite[FRAME] += (.25 * charSpeed) # updates frame
-            if 1.8 < sprite[FRAME] < 2.1:
+            if 1.8 < sprite[FRAME] < 2.5:
                 playerAttack(sprite, current)  # Call player attack to handle damage
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
