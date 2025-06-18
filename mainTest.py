@@ -7,6 +7,7 @@ screen = display.set_mode((1600,900))
 init()
 introfont = font.SysFont("Georgia",36)
 mixer.music.load("Music/ominous.mp3")
+mixer.music.set_volume(0.5)
 def running():
     for evt in event.get():
         if evt.type == QUIT:
@@ -202,6 +203,7 @@ def flipped(sprite, frame): # flips the sprite if it is facing left
     return frame
 
 def updateSprite(sprite, player=False): # updates the sprite's frame (and move for attacks)
+    global gameover
     current = sprite[MOVES][sprite[MOVE]] # name of current move
 
     if player == 'player':  # If the sprite is the player, handle special cases
@@ -224,6 +226,8 @@ def updateSprite(sprite, player=False): # updates the sprite's frame (and move f
             sprite[FRAME] += 0.1  # Increment frame for dead animation
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 global running
+                if not victory:
+                    gameover = True
                 running = False  # If the player is dead, end the game
                 sprites.remove(sprite)  # Remove the sprite from the list
                 sprite[FRAME] -= .1 # Prevents frame from going out of bounds
@@ -299,6 +303,8 @@ def drawScene(screen, x, y):
         screen.blit(wall,(3850-x,700-y))
 
 def drawOverlay(health):
+    missionlist = ["Missions"]
+    
     screen.blit(fade,(-160,-90))
     screen.blit(healthBar,(1300,0))
     screen.blit(inventoryPic,(1515,115))
@@ -311,6 +317,17 @@ def drawOverlay(health):
         draw.line(screen, (78,74,78), (1338, 16), (1338 + ((200 - health) * 0.75), 16), 15)  # Draw the health bar
     if hunger < 200:
         draw.line(screen, (78,74,78), (1338, 47), (1338 + ((200 - hunger) * 0.75), 47), 15)
+    for i in [claw, book, puppet, scale, horn, crown]:
+        if i not in inventory and i not in chests[7][2]:
+            name = itemLore[i][0].replace("~", "")
+            missionlist.append(f"       Find {name}")
+    
+    missionlist.append("Find the Hollow King")
+    missionlist.append("Kill the Hollow King")
+
+    for a, line in enumerate(missionlist):
+            introtxt = font.SysFont("Georgia",18).render(line, True, (215, 166, 83))
+            screen.blit(introtxt, (10, 10 + a * 25))
 
 def getDist(sprite1, sprite2):
     dx = sprite2[HITBOX].centerx - sprite1[HITBOX].centerx
@@ -562,6 +579,8 @@ respawning = False
 gameClock = time.Clock()
 showLore = False
 activeLoreItem = None
+victory = False
+gameover = False
 
 mixer.music.play()
 introtext = [
@@ -929,6 +948,9 @@ while running:
                     stop(sprites[1])  # Stop 
                 if 14200 < mill % cycle and d < 50:
                     changeMove(sprites[1], 'Attack')
+                if sprites[1][HEALTH] <= 0 and not victory:
+                    victory = True
+                    running = False
                 
         updateSprite(sprites[1], 'boss')  # Update the boss sprite
 
@@ -941,7 +963,7 @@ while running:
         drawInventory()
 
         if showLore and activeLoreItem:
-            loreBox = Surface((500, 150))
+            loreBox = Surface((750, 150))
             loreBox.fill((25, 25, 25))
 
             for i, line in enumerate(itemLore[activeLoreItem]):
@@ -949,14 +971,14 @@ while running:
                 loreBox.blit(text, (10, 10 + i * 30))
 
             screen.blit(loreBox, (50, 700))
-            draw.rect(loreBox, (215, 166, 83), (50,700,500,150), 3)
+            draw.rect(loreBox, (215, 166, 83), (50,700,750,150), 3)
 
             # Dismiss X
-            draw.rect(screen, (200, 60, 60), (530, 700, 30, 30))
+            draw.rect(screen, (200, 60, 60), (730, 700, 30, 30))
             xFont = font.SysFont("Arial", 24)
             xText = xFont.render("X", True, (255, 255, 255))
-            screen.blit(xText, (537, 703))
-            xRect = Rect(530, 700, 30, 30)
+            screen.blit(xText, (737, 703))
+            xRect = Rect(730, 700, 30, 30)
             if mbd and mb[0] and xRect.collidepoint(mx, my):
                 showLore = False
 
@@ -998,7 +1020,39 @@ while running:
                 inventory.remove(foodPic)  # Remove the food from inventory after eating
                 eatStart = mill
         
-        print(gold)
+        if gameover:
+            screen.fill((0, 0, 0))
+            endFont = font.SysFont("Georgia", 64)
+
+            if gameover:
+                
+                endText = endFont.render("You Died. Velmara is lost...", True, (200, 60, 60))
+            else:
+                endText = endFont.render("You did it. Velmara is free!", True, (100, 255, 100))
+
+            for a in range(40):
+                cover = Surface((1600,900))
+                cover.fill(0)
+                cover.set_alpha(a)
+                cover.blit(endText,(400,400))
+                screen.blit(cover,(0,0))
+                display.flip()
+                time.wait(20)
+                
+            waiting = True
+
+            while waiting:
+                for evnt in event.get():
+                    if evnt.type == QUIT:
+                        quit()
+                    if evnt.type == MOUSEBUTTONDOWN and evnt.button == 1:
+                        waiting = False
+
+                display.flip()
+                time.wait(30)
+        
+
+
         gameClock.tick(50)
         # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
         # # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
@@ -1008,3 +1062,6 @@ while running:
         
     display.flip()
 quit()
+
+
+
