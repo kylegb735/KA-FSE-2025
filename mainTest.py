@@ -110,14 +110,14 @@ def clear(maskX, maskY): # checks if the pixel at maskX, maskY is clear (not a w
 def movePlayer(sprite, globalx, globaly): # moves the map by x and y. Checks for walls
     x, y = 0, 0  # Initialize movement variables
     if keys[K_w] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + globaly - 14):
-        y -= 5  # Move up by 2 pixels
+        y -= 10  # Move up by 2 pixels
     if keys[K_s] and clear(sprite[HITBOX].centerx + globalx, sprite[HITBOX].bottom + 14 + globaly):
-        y += 5  # Move down by 2 pixels
+        y += 10  # Move down by 2 pixels
     if keys[K_a] and clear(sprite[HITBOX].centerx + globalx - 30, sprite[HITBOX].bottom + globaly):
-        x -= 5 # Move left by 2 pixels
+        x -= 10 # Move left by 2 pixels
         sprite[FLIPPED] = True  # Set flipped to False if moving right
     if keys[K_d] and clear(sprite[HITBOX].centerx + globalx + 30, sprite[HITBOX].bottom + globaly):
-        x += 5 # Move right by 2 pixels
+        x += 10 # Move right by 2 pixels
         sprite[FLIPPED] = False  # Set flipped to True if moving left
     global slowPlayer
     if slowPlayer:  # If the player is slowed by a spell
@@ -207,22 +207,22 @@ def updateSprite(sprite, player=False): # updates the sprite's frame (and move f
 
     if player == 'player':  # If the sprite is the player, handle special cases
         if current == 'Hurt':  # If the sprite is hurt, stop updating
-            sprite[FRAME] += (0.15 * charSpeed) # updates frame
+            sprite[FRAME] += (0.3 * charSpeed) # updates frame
             # print(sprite[FRAME], current)
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
                 sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
 
         elif 'Attack' in current: # if they just did an attack
-            sprite[FRAME] += (.25 * charSpeed) # updates frame
-            if 1.8 < sprite[FRAME] < 2.5:
+            sprite[FRAME] += (.5 * charSpeed) # updates frame
+            if 1.8 < sprite[FRAME] < 3.2:
                 playerAttack(sprite, current)  # Call player attack to handle damage
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
                 sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
         
         elif current == 'Dead':  # If the sprite is dead, stop updating
-            sprite[FRAME] += 0.1  # Increment frame for dead animation
+            sprite[FRAME] += 0.2  # Increment frame for dead animation
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 global running
                 if not victory:
@@ -232,44 +232,44 @@ def updateSprite(sprite, player=False): # updates the sprite's frame (and move f
                 sprite[FRAME] -= .1 # Prevents frame from going out of bounds
 
         else: # all other moves
-            sprite[FRAME] += (0.2 * charSpeed) # updates frame
+            sprite[FRAME] += (0.4 * charSpeed) # updates frame
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
     elif player == 'boss':
         if current == 'Hurt':  # If the sprite is hurt, stop updating
-            sprite[FRAME] += 0.15 # updates frame
+            sprite[FRAME] += 0.3 # updates frame
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
                 sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
 
         elif 'Attack' in current: # if they just did an attack
-            sprite[FRAME] += 0.2 # updates frame
-            if 2.9 < sprite[FRAME] < 3.1:
+            sprite[FRAME] += 0.4 # updates frame
+            if 2.9 < sprite[FRAME] < 3.3:
                 enemyAttack(sprite, current)  # Call enemy attack to handle damage
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
                 sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
 
         elif current == 'Dead':  # If the sprite is dead, stop updating
-            sprite[FRAME] += 0.1  # Increment frame for dead animation
+            sprite[FRAME] += 0.2  # Increment frame for dead animation
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 running = False  # If the player is dead, end the game
                 sprites.remove(sprite)  # Remove the sprite from the list
                 sprite[FRAME] -= .1 # Prevents frame from going out of bounds
 
         else: # all other moves
-            sprite[FRAME] += 0.2 # updates frame
+            sprite[FRAME] += 0.4 # updates frame
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
     else:
         if current == 'Hurt':  # If the sprite is hurt, stop updating
-            sprite[FRAME] += 0.15 # updates frame
+            sprite[FRAME] += 0.3 # updates frame
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
                 sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
 
         elif 'Attack' in current: # if they just did an attack
-            sprite[FRAME] += 0.2 # updates frame
+            sprite[FRAME] += 0.4 # updates frame
             if 2.9 < sprite[FRAME] < 3.1:
                 enemyAttack(sprite, current)  # Call enemy attack to handle damage
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
@@ -277,13 +277,13 @@ def updateSprite(sprite, player=False): # updates the sprite's frame (and move f
                 sprite[MOVE] = sprite[MOVES].index('Idle') # set them back to idle
 
         elif current == 'Dead':  # If the sprite is dead, stop updating
-            sprite[FRAME] += 0.1  # Increment frame for dead animation
+            sprite[FRAME] += 0.2  # Increment frame for dead animation
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprites.remove(sprite)  # Remove the sprite from the list
-                sprite[FRAME] -= .1 # Prevents frame from going out of bounds
+                sprite[FRAME] -= .2 # Prevents frame from going out of bounds
 
         else: # all other moves
-            sprite[FRAME] += 0.2 # updates frame
+            sprite[FRAME] += 0.4 # updates frame
             if sprite[FRAME] >= len(sprite[PICS][sprite[MOVE]]):
                 sprite[FRAME] = 0 # reset frames
 
@@ -520,8 +520,8 @@ player.append(getMoves(player[0]))
 player.append(getPics(player[0], player[7]))
 hunger = 100  # Player's hunger level
 #                           dmg rng spell
-fightAttacks = {'Attack_1': (15,25, False), 'Attack_2': (10,30, False), 'Attack_3': (20,20, False)}
-shinAttacks  = {'Attack_1': (20,25, False), 'Attack_2': (15,30, False), 'Attack_3': (25,20, False)}
+fightAttacks = {'Attack_1': (15,25, False), 'Attack_2': (10,30, False), 'Attack_3': (20,30, False)}
+shinAttacks  = {'Attack_1': (20,25, False), 'Attack_2': (15,30, False), 'Attack_3': (25,30, False)}
 samAttacks   = {'Attack_1': (25,35, False), 'Attack_2': (20,50, False), 'Attack_3': (35,30, False)}
 
 #item & inventory stuff
@@ -1136,7 +1136,7 @@ while running:
         
 
 
-        gameClock.tick(50)
+        gameClock.tick(25)
         print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
         # # print(sprites[0][HITBOX].x, sprites[0][HITBOX].y)  # Print player position for debugging
         # # print(offsetx, offsety)  # Print player position for debugging
