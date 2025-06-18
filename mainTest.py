@@ -30,21 +30,20 @@ def getPics(sprite, moves): #get pictures from each file
         enemyPics.append(movePics)
     return enemyPics
 
-def loadItems():
+def loadItems(): # loads image files for items
     itemImages = []
     for name in glob(f"Images/drops/*.png"):
         itemPic = transform.scale(image.load(name).convert_alpha(),(32,32))
         itemImages.append(itemPic)
     return itemImages
 
-def dropItem(position):
+def dropItem(position): # drops an item at the specified position (where mob dies)
     item = choice(itemImages)
     droppedItems.append([item, position[0], position[1]])
 
-def generateEnemy(spawnPoint):
+def generateEnemy(spawnPoint): # generates an enemy at the specified spawn point
     type = randint(0, len(enemyTypes) - 1) # randomly select an enemy type
     # Create a new enemy with the selected type
-    # spawnPoint = 400, 200
     x, y = spawnPoint  # Start at the spawn point
     while not clear(x, y) or (x,y) == (spawnPoint):  # Ensure the enemy is spawned in a clear area
         x += randint(-150, 150)
@@ -55,7 +54,7 @@ def generateEnemy(spawnPoint):
     #               name                 hitbox                              move                 frame health       flipped  shield  moves                pics
     sprites.append([enemyTypes[type][0], Rect(x - 20, y - 60, 40, 60), 6, 0, enemyTypes[type][1], False, False,  enemyTypes[type][2], enemyTypes[type][3]])
 
-def playerShield(sprite):
+def playerShield(sprite): # handles player shield logic
     if keys[K_LCTRL] and sprite[MOVE] == sprite[MOVES].index('Idle'):  # If CTRL is pressed and the sprite is idle
         sprite[SHIELD] = True
         changeMove(sprites[0], 'Shield')
@@ -79,9 +78,9 @@ def enemyAttack(sprite, move): # handles enemy attacks
             hurt(sprites[0], damage)
             print('hit')
 
-def playerAttack(sprite, move):
+def playerAttack(sprite, move): # handles player attacks
     current = sprite[MOVES][sprite[MOVE]] # name of current move
-    damage, range, spell = attacks[sprite[NAME]][current]
+    damage, range, spell = attacks[sprite[NAME]][current] # gets current move stats
     print(current, damage, range, spell)
     damage *= charDamage  if not spell else damage# Scale damage by character's damage stat
     changeMove(sprite, move) # sets to attack move
@@ -100,7 +99,7 @@ def changeMove(sprite, move): # changes the sprite's move to the specified move,
         sprite[FRAME] = 0 # resets the frame
 
 def clear(maskX, maskY): # checks if the pixel at maskX, maskY is clear (not a wall)
-    if bossWall and BOSSWALL.collidepoint(maskX, maskY):
+    if bossWall and BOSSWALL.collidepoint(maskX, maskY): # if the wall is still and there and oyu hit it
         return False
     if maskX < 0 or maskX >= mask.get_width() or maskY < 0 or maskY >= mask.get_height():
         return False
@@ -127,7 +126,7 @@ def movePlayer(sprite, globalx, globaly): # moves the map by x and y. Checks for
         else:
             slowPlayer = False  # Reset slow state after 2 seconds
 
-    x *= charSpeed
+    x *= charSpeed # some character types are faster than others
     y *= charSpeed
 
     if x == 0 and y == 0:  # If no movement keys are pressed
@@ -173,7 +172,7 @@ def move(sprite, x, y, run=False): # moves the character (hitbox) by x and y. Se
 def stop(sprite): # just sets the sprite to idle if it was moving
     if sprite[MOVE] == sprite[MOVES].index('Walk'):
         sprite[MOVE] = sprite[MOVES].index('Idle')
-    if 'Run' in sprite[MOVES]:
+    if 'Run' in sprite[MOVES]: # the boss has no run, so .index('Run') will fail
         if sprite[MOVE] == sprite[MOVES].index('Run'):
             sprite[MOVE] = sprite[MOVES].index('Idle')
 
@@ -312,7 +311,7 @@ def drawOverlay(health):
     if hunger < 200:
         draw.line(screen, (78,74,78), (1338, 47), (1338 + ((200 - hunger) * 0.75), 47), 15)
 
-def getDist(sprite1, sprite2):
+def getDist(sprite1, sprite2): # calculates the distance between two sprites
     dx = sprite2[HITBOX].centerx - sprite1[HITBOX].centerx
     dy = sprite2[HITBOX].centery - sprite1[HITBOX].centery
     d = hypot(dx, dy)
@@ -328,19 +327,19 @@ def changeMain(main): # Change the player's main
     Speed, Damage, Defense = stats[main]  # Update character stats based on the new main
     return Speed, Damage, Defense, weaponPic
 
-def drawInventory():
+def drawInventory(): # draws the inventory items on the right side of the screen
     y = 225
     i = 0
     print(covers)
     for item in inventory:
         screen.blit(transform.scale(item,(48,48)), (1526, y))
         print(covers[i], i)
-        if covers[i] != None:
+        if covers[i] != None: # if there is a cover for the item, draw it
             screen.blit(covers[i], (1526, y + (51 - covers[i].get_height())))
         i += 1
         y += 75
 
-def openChest(currentchest):  
+def openChest(currentchest):  # handles opening a chest and displaying its contents
     global activeLoreItem, showLore, gold, bossWall
     screen.blit(insidechest,(1250,439))
     chestinventory = currentchest[2]
@@ -348,6 +347,7 @@ def openChest(currentchest):
     x = 1261
     y = 451
     
+    # column 1
     for item in chestinventory[:5]:
             screen.blit(transform.scale(item,(48,48)), (x, y))
             itemRect = Rect(x, y, 48, 48)
@@ -359,6 +359,7 @@ def openChest(currentchest):
                     showLore = True
             y += 75
 
+    # column 2
     for item in chestinventory[5:10]:
         screen.blit(transform.scale(item,(48,48)), (x + 75, y - 375))
         itemRect = Rect(x + 75, y - 375, 48, 48)
@@ -370,6 +371,7 @@ def openChest(currentchest):
                 showLore = True
         y += 75
     
+    # column 3
     for item in chestinventory[10:14]:
         screen.blit(transform.scale(item,(48,48)), (x + 149, y - 750))
         itemRect = Rect(x + 149, y - 750, 48, 48)
@@ -381,7 +383,7 @@ def openChest(currentchest):
                 showLore = True
         y += 75
         
-    if currentchest[3] == 1:
+    if currentchest[3] == 1: # the special chest
         y = 225
         screen.blit(insidechest,(1250,439))
         for item in inventory:
@@ -407,17 +409,16 @@ def openChest(currentchest):
                     inventory.remove(item)
                 y += 75
 
-def consume(pos):
+def consume(pos): # handles consuming food or potions from the inventory
     if pos < len(inventory):  # Check if the position is valid
         item = inventory[pos]
         if item == foodPic:
             eat(pos)
         if item in potions:
-            print('drinking', item)
             drink(pos, item)
 
 
-def eat(pos):
+def eat(pos): # handles eating food
     global eatStart, eating, foodCover, hunger
     if hunger < 200 and foodPic in inventory:
         if kd:
@@ -433,7 +434,7 @@ def eat(pos):
             inventory.remove(foodPic)  # Remove the food from inventory after eating
             eatStart = mill
 
-def drink(pos, item):
+def drink(pos, item): # handles drinking potions
     global drinkStart, drinking, drinkCover
     if item == healthPot and sprites[0][HEALTH] < 200 and healthPot in inventory:
         if kd:
@@ -443,14 +444,12 @@ def drink(pos, item):
         covers[pos] = drinkCover  # Add the drink cover to the covers list
         if mill - drinkStart > 2000:
             drinking = False  # Reset drinking flag after 2 seconds
-            sprites[0][HEALTH] += 50  # Increase health by 50
-            if sprites[0][HEALTH] > 200:
-                sprites[0][HEALTH] = 200
+            heal(sprites[0], 50)  # Heal the player by 50 health
             inventory.remove(healthPot)  # Remove the food from inventory after drinking
             drinkStart = mill
 
-def makeCover(start):
-    Cover = Surface((49, 51))  # Create a surface for the food cover
+def makeCover(start): # Create a cover surface for food or potion consumption
+    Cover = Surface((49, 51))
     Cover.fill((0, 0, 0, 0))
     Cover.set_colorkey((0, 0, 0))
     Cover.set_alpha(200)
@@ -489,7 +488,7 @@ title = image.load("Images/Maps/name.png")
 title = transform.scale(title, (936, 880))  
 
 
-offsetx, offsety = 0,0
+offsetx, offsety = 0,0 # global map offset based on player movement
 
 # Sprite init stuff
 charType = 'Fighter'  # Default character type
@@ -532,7 +531,7 @@ strengthPot = image.load("Images/potions/strength.png")  # Strength potion image
 itemImages.append(healthPot)  # Add health potion to item images
 
 potions = [healthPot, speedPot, strengthPot]  # List of potion images
-inventory = [foodPic, healthPot]
+inventory = []
 
 itemLore = {
     claw:  ["~The Dragon's Claw~","Ripped from Drogmir the Dragons corpse.","Said to still twitch with cursed heat.","Indestructible"],
