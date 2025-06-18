@@ -407,6 +407,16 @@ def openChest(currentchest):
                     inventory.remove(item)
                 y += 75
 
+def consume(pos):
+    if pos < len(inventory):  # Check if the position is valid
+        item = inventory[pos]
+        if item == foodPic:
+            eat(pos)
+        if item in potions:
+            print('drinking', item)
+            drink(pos, item)
+
+
 def eat(pos):
     global eatStart, eating, foodCover, hunger
     if hunger < 200 and foodPic in inventory:
@@ -418,16 +428,34 @@ def eat(pos):
         if mill - eatStart > 2000:
             eating = False  # Reset eating flag after 2 seconds
             hunger += 65
+            if hunger > 200:
+                hunger = 200
             inventory.remove(foodPic)  # Remove the food from inventory after eating
             eatStart = mill
 
+def drink(pos, item):
+    global drinkStart, drinking, drinkCover
+    if item == healthPot and sprites[0][HEALTH] < 200 and healthPot in inventory:
+        if kd:
+            drinkStart = mill  # Start drinking when the key is pressed
+            drinking = True  # Set drinking flag to True
+        drinkCover = makeCover(drinkStart)  # Crdrinke a surface for the drink cover
+        covers[pos] = drinkCover  # Add the drink cover to the covers list
+        if mill - drinkStart > 2000:
+            drinking = False  # Reset drinking flag after 2 seconds
+            sprites[0][HEALTH] += 50  # Increase health by 50
+            if sprites[0][HEALTH] > 200:
+                sprites[0][HEALTH] = 200
+            inventory.remove(healthPot)  # Remove the food from inventory after drinking
+            drinkStart = mill
+
 def makeCover(start):
-    foodCover = Surface((49, 51))  # Create a surface for the food cover
-    foodCover.fill((0, 0, 0, 0))
-    foodCover.set_colorkey((0, 0, 0))
-    foodCover.set_alpha(200)
-    draw.rect(foodCover, (111, 111, 111), (0, (0 + (mill - start) / 2000 * 49), 49, 51 - (mill - start) / 2000 * 49))
-    return foodCover  # Return the food cover surface
+    Cover = Surface((49, 51))  # Create a surface for the food cover
+    Cover.fill((0, 0, 0, 0))
+    Cover.set_colorkey((0, 0, 0))
+    Cover.set_alpha(200)
+    draw.rect(Cover, (111, 111, 111), (0, (0 + (mill - start) / 2000 * 49), 49, 51 - (mill - start) / 2000 * 49))
+    return Cover  # Return the food cover surface
 
 #health & inventory stuff
 healthBar = image.load("Images/Bars/health.png")
@@ -497,7 +525,14 @@ puppet = image.load("Images/Collectables/Cursed Puppet.png")
 scale = image.load("Images/Collectables/Drogmirs Scales.png")
 horn = image.load("Images/Collectables/Hollows Horn.png")
 crown = image.load("Images/Collectables/Old Kings Crown.png")
-inventory = [foodPic]
+
+healthPot = image.load("Images/potions/health.png")  # Health potion image
+speedPot = image.load("Images/potions/speed.png")  # Speed potion image
+strengthPot = image.load("Images/potions/strength.png")  # Strength potion image
+itemImages.append(healthPot)  # Add health potion to item images
+
+potions = [healthPot, speedPot, strengthPot]  # List of potion images
+inventory = [foodPic, healthPot]
 
 itemLore = {
     claw:  ["~The Dragon's Claw~","Ripped from Drogmir the Dragons corpse.","Said to still twitch with cursed heat.","Indestructible"],
@@ -512,13 +547,13 @@ itemLore = {
 weapons = {'Shinobi': transform.scale(image.load("Images/Weapons/Dagger.png").convert_alpha(), (32, 32)), 'Samurai': transform.scale(image.load("Images/Weapons/Katana.png").convert_alpha(), (32, 32))}  # Dictionary to hold weapon images
 weaponPic = 'None'  # Default weapon
 chests = [
-    (560,130, [weapons['Samurai']] + [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))], 0),
-    (1764,2440,[claw]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
-    (1402,1748,[puppet]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
+    (560,130, [healthPot] + [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))], 0),
+    (1764,2440,[weapons['Shinobi']] + [claw]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
+    (1402,1748,[weapons['Samurai']] + [puppet]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
     (2812,554,[scale]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
     (2452,2772,[horn]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
-    (2208,3252,[crown]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
-    (4412,2474,[book]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
+    (2208,3252,[weapons['Shinobi']] + [crown]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
+    (4412,2474,[weapons['Samurai']] + [book]+ [choice(itemImages) for i in range(randint(3,5))] + [foodPic for i in range(randint(0,3))],0),
     (5792,2505,[],1)
     ]  # List to store location of chests
 
@@ -579,6 +614,7 @@ startRect = Rect(1263,409,320,50)
 scoreRect = Rect(1346,758,234,122)
 running = True
 eating = False  # Flag to indicate if the player is eating
+drinking = False  # Flag to indicate if the player is eating
 slowPlayer = False
 opening = False  # Flag to indicate if a chest is being opened
 bossFight = False
@@ -1009,9 +1045,26 @@ while running:
             elif hunger <= 0:
                 hurt(sprites[0], 10)
         
-        if keys[K_2]:  # If the player presses 2 and hunger is below 200
-            eat(0)  # Eat food at position 1
-        
+        if keys[K_1]:  # If the player presses 2 and hunger is below 200
+            consume(0)  # Eat food at position 1
+        if keys[K_2]:
+            consume(1)
+        if keys[K_3]:
+            consume(2)
+        if keys[K_4]:
+            consume(3)
+        if keys[K_5]:
+            consume(4)
+        if keys[K_6]:
+            consume(5)
+        if keys[K_7]:
+            consume(6)
+        if keys[K_8]:
+            consume(7)
+        if keys[K_9]:
+            consume(8)
+
+
         print(gold)
         gameClock.tick(50)
         # print(f'Time: {time.get_ticks()} | FPS: {gameClock.get_fps()}')  # Print FPS for debugging
